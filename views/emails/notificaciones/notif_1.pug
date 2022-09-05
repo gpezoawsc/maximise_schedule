@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        meta(http-equiv="X-UA-Compatible", content="ie=edge")
+        style
+            include ./notif_1.css
+    body
+        div(class='title-principal')
+            img(src="https://static.wixstatic.com/media/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.png/v1/fill/w_250,h_86,al_c,q_85,usm_0.66_1.00_0.01/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.webp",style='width:150px;height:60px;')
+
+        div(class='container')
+            if tipo==22 || tipo==23 
+                p(class='texto') Hola #{nombreUsuario}
+                p(class='texto') Para continuar con tu proceso de importación, recuerda cargar la cédula de identidad del representante legal de la empresa o persona que realizará la importación.  
+                p(class='texto') Puedes cargar el documento iniciando sesión en nuestra
+                    <strong> 
+                        a(href=`${host}`) plataforma digital</strong>. O puedes adjuntar el archivo respondiendo a este correo. 
+                
+                p(class='texto') La documentación pasará por un proceso de validación. Si está de acuerdo con lo requerido, continuaremos con tu proceso de importación. 
+                p(class='texto') Recuerda que, frente a cualquier duda, te puedes contactar conmigo.  
+
+            else if tipo==24
+                p(class='texto') Hola #{nombreUsuario}
+                p(class='texto') La documentación del poder de representante legal no ha sido aprobada. Por favor, vuelve a cargarla en nuestra 
+                    <strong> 
+                        a(href=`${host}`) plataforma digital</strong> o bien ponte en contacto conmigo para apoyarte con este requerimiento.
+                
+            else if tipo==16 || tipo==17 
+                p(class='texto') Hola #{nombreUsuario}
+                p(class='texto') La cedula de identidad cargada en la plataforma digital no ha sido aprobada. Por favor, vuelve a cargarla en nuestra
+                    <strong> 
+                        a(href=`${host}`) plataforma digital</strong> o bien ponte en contacto conmigo para ayudarte en este requerimiento.   
+
+            else if tipo==18
+                p(class='texto') Hola #{nombreUsuario}
+                p(class='texto') La documentación del poder de representante legal no ha sido aprobada. Por favor, vuelve a cargarla en nuestra
+                    <strong> 
+                        a(href=`${host}`) plataforma digital</strong> o bien ponte en contacto conmigo para apoyarte con este requerimiento. 
+            
+            else if tipo==14
+                p(class='texto') Hola #{nombreUsuario}
+                    each txt in texto.length ? texto :['SIN CONTENIDO']
+                        p(class='texto') #{txt}
+                    
+                    <strong> 
+                        a(href=`${host}`) Sitio web</strong>  
+
+                p(class='texto') Que estés muy bien y contáctame si tienes dudas. 
+            else    
+                each txt in texto.length ? texto :['SIN CONTENIDO']
+                    p(class='texto') #{txt}
+
+        
+        div(class='container') 
+            p Muchas gracias
+
+            if comercial!=null 
+                    <p><strong> #{comercial.nombre} </strong></p>
+                    <p><strong> #{comercial.telefono} </strong></p>
+            if comercial!=null && comercial.telefono!=null 
+                p 
+                    strong 
+                        a(href='https://api.whatsapp.com/send?phone='+comercial.telefono) Whatsapp
+
+            div(class='border')
+
+        table(style="width:auto; border: none; font-family: Arial, Helvetica, sans-serif; font-size: 12px;")
+            tr
+                th(style="align-content: left; text-align: left; background-color: #D6D6D6; padding: 10px;") 
+                td
+                        img(src=`https://static.wixstatic.com/media/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.png/v1/fill/w_250,h_86,al_c,q_85,usm_0.66_1.00_0.01/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.webp",style='width:150px;height:60px;`)
+                td 
+                    <p> <strong>WS Cargo</strong>   
+                    <p> Oficina: Av Andrés Bello 2299, Of 701, Providencia
+                    <p> Bodega:  Camino Noviciado N° 1945, comuna de Pudahuel, Región Metropolitana

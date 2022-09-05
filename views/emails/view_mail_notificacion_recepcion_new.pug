@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        meta(http-equiv="X-UA-Compatible", content="ie=edge")
+        style
+            include ./view_mail_notificacion_recepcion.css
+    body
+        div(class='title-principal')
+            img(src="https://static.wixstatic.com/media/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.png/v1/fill/w_250,h_86,al_c,q_85,usm_0.66_1.00_0.01/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.webp",style='width:150px;height:60px;')
+
+        div(class='container')
+            div(class='border')
+                each dato in datos.length ? datos :['SIN REGISTROS']
+                    p(class='texto') Hola  #{cliente}
+
+                    if dato.fk_proveedor !=null
+
+                        p(class='texto') Te cuento que el <strong>#{fecha}</strong>, recibimos en nuestra bodega en china la siguiente carga
+                        <ul>
+                            <li>•	Nombre Proveedor: <strong>"#{dato.proveedor_nombre}"</strong></li>
+                            <li>•	Bultos recepcionados hasta la fecha: <strong>"#{dato.bultos}"</strong></li>
+                            
+                        </ul>
+                    else
+                        p(class='texto') Te cuento que el <strong>#{fecha}</strong>, recibimos en nuestra bodega en china la siguiente carga
+                        <ul>
+                            <li>•	Nombre Proveedor: <strong>no identificado</strong></li>
+                        </ul>
+                        
+                    if dato.cantidad_bultos==0 && !dato.documentacion
+
+                        div(class='border')
+                            if datosAdicionales!=null 
+                                    if datosAdicionales.referencia!=null
+                                       p(class='texto') Esta carga corresponde al servicio #{datosAdicionales.fk_consolidado} | #{datosAdicionales.referencia} y la carga esperada según la documentación es:
+                                    else
+                                       p(class='texto') Esta carga corresponde al servicio #{datosAdicionales.fk_consolidado} y la carga esperada según la documentación es:         
+                            else 
+                                p(class='texto') Según lo informado por usted y/o la documentación de su proveedor (invoice y/o packing list), debería llegar la siguiente carga:
+
+                            <ul>
+                                if datosAdicionales!=null 
+                                    <li>•	Cantidad de proveedores esperados:#{datosAdicionales.num_proveedores}</li>
+                                    <li>•	Cantidad de bultos esperados: #{dato.cantidad_bultos}</li>
+                                    <li>•	Kilos esperados: #{dato.peso_esperado} Kg</li>
+                                    <li>•	Metros cúbicos esperados: #{dato.volumen_esperado} M³</li>
+                                else
+                                    <li>•	Cantidad de bultos esperados: #{dato.cantidad_bultos}</li>
+                                    <li>•	Kilos esperados: #{dato.peso_esperado} Kg</li>
+                                    <li>•	Metros cúbicos esperados: #{dato.volumen_esperado} M³</li>
+                            </ul>
+
+                    if dato.cantidad_bultos>0 && dato.cantidad_bultos==dato.bultos
+
+                         div(class='border')
+                            if datosAdicionales!=null 
+                                    if datosAdicionales.referencia!=null
+                                       p(class='texto') Esta carga corresponde al servicio #{datosAdicionales.fk_consolidado} | #{datosAdicionales.referencia} y la carga esperada según la documentación es:
+                                    else
+                                       p(class='texto') Esta carga corresponde al servicio #{datosAdicionales.fk_consolidado} y la carga esperada según la documentación es:         
+                            else 
+                                p(class='texto') Según lo informado por usted y/o la documentación de su proveedor (invoice y/o packing list), debería llegar la siguiente carga:
+
+                            <ul>
+                                if datosAdicionales!=null 
+                                    <li>•	Cantidad de proveedores esperados:#{datosAdicionales.num_proveedores}</li>
+                                    <li>•	Cantidad de bultos esperados: #{dato.cantidad_bultos}</li>
+                                    <li>•	Kilos esperados: #{dato.peso_esperado} Kg</li>
+                                    <li>•	Metros cúbicos esperados: #{dato.volumen_esperado} M³</li>
+                                else
+                                    <li>•	Cantidad de bultos esperados: #{dato.cantidad_bultos}</li>
+                                    <li>•	Kilos esperados: #{dato.peso_esperado} Kg</li>
+                                    <li>•	Metros cúbicos esperados: #{dato.volumen_esperado} M³</li>
+                            </ul>
+
+                            p(class='texto') Por lo tanto, la recepción de este proveedor se encuentra completa
+
+                    else if dato.cantidad_bultos>0 && dato.cantidad_bultos>dato.bultos
+                         div(class='border')
+                            if datosAdicionales!=null 
+                                    if datosAdicionales.referencia!=null
+                                       p(class='texto') Esta carga corresponde al servicio #{datosAdicionales.fk_consolidado} | #{datosAdicionales.referencia} y la carga esperada según la documentación es:
+                                    else
+                                       p(class='texto') Esta carga corresponde al servicio #{datosAdicionales.fk_consolidado} y la carga esperada según la documentación es:         
+                            else 
+                                p(class='texto')  Según lo informado por usted, arribaron #{dato.diff} bultos menos a los informados por usted. Por favor contacte a su ejecutivo(a) comercial para aclarar la diferencia.Se informa el detalle de tu carga, según la carga recepcionada de tu proveedor (1):
+
+                            <ul>
+                                if datosAdicionales!=null 
+                                    <li>•	Cantidad de proveedores esperados:#{datosAdicionales.num_proveedores}</li>
+                                    <li>•	Cantidad de bultos esperados: #{dato.cantidad_bultos}</li>
+                                    <li>•	Kilos esperados: #{dato.peso_esperado} Kg</li>
+                                    <li>•	Metros cúbicos esperados: #{dato.volumen_esperado} M³</li>
+                                else
+                                    <li>•	Cantidad de bultos esperados: #{dato.cantidad_bultos}</li>
+                                    <li>•	Kilos esperados: #{dato.peso_esperado} Kg</li>
+                                    <li>•	Metros cúbicos esperados: #{dato.volumen_esperado} M³</li>
+                            </ul>
+                        
+
+                    else if dato.cantidad_bultos>0 && dato.cantidad_bultos<dato.bultos
+
+                        div(class='border')
+                            if datosAdicionales!=null 
+                                    if datosAdicionales.referencia!=null
+                                       p(class='texto') Esta carga corresponde al servicio #{datosAdicionales.fk_consolidado} | #{datosAdicionales.referencia} y la carga esperada según la documentación es:
+                                    else
+                                       p(class='texto') Esta carga corresponde al servicio #{datosAdicionales.fk_consolidado} y la carga esperada según la documentación es:         
+                            else 
+                                p(class='texto') Según lo informado por usted, arribaron #{dato.diff} bultos adicionales a los informados por usted. Por favor contacte a su ejecutivo(a) comercial para aclarar la diferencia.Se informa el detalle de tu carga, según la carga recepcionada de tu proveedor (1):
+
+                            <ul>
+                                if datosAdicionales!=null 
+                                    <li>•	Cantidad de proveedores esperados:#{datosAdicionales.num_proveedores}</li>
+                                    <li>•	Cantidad de bultos esperados: #{dato.cantidad_bultos}</li>
+                                    <li>•	Kilos esperados: #{dato.peso_esperado} Kg</li>
+                                    <li>•	Metros cúbicos esperados: #{dato.volumen_esperado} M³</li>
+                                else
+                                    <li>•	Cantidad de bultos esperados: #{dato.cantidad_bultos}</li>
+                                    <li>•	Kilos esperados: #{dato.peso_esperado} Kg</li>
+                                    <li>•	Metros cúbicos esperados: #{dato.volumen_esperado} M³</li>
+                            </ul>
+
+                    div(class='border')
+                    h3(class='bajada') Las condiciones de recepción fueron las siguientes:
+
+                    each detalle in dato.detalle.length ? dato.detalle :['SIN REGISTROS']
+                        if detalle.estado_carga==null
+                            div(class='card')
+                                strong(class='card-title') #{detalle.producto}
+                                <p>#{detalle.cantidad_bultos} bultos<span class="slash">/</span>#{detalle.volumen} m³<span class="slash">/</span>#{detalle.peso} kg </p>
+                                <p>
+                                if detalle.tipo_camion==1
+                                    <b>Camión Cerrado /</b>
+                                else if detalle.tipo_camion==2
+                                    <b>Camión Abierto /</b>
+                                
+                                if detalle.tipo_almacenado==1
+                                    <b>Almacenado Interior /</b>
+                                else if detalle.tipo_almacenado==2
+                                    <b>Almacenado Exterior /</b>
+
+                                if detalle.tipo_almacenado_techo==1
+                                    <b>Bajo techo: Si /</b>
+                                else if detalle.tipo_almacenado_techo==2
+                                    <b>Bajo techo: No /</b>
+
+                                if detalle.tipo_clima==1
+                                    <b>Clima: Soleado /</b>
+                                else if detalle.tipo_clima==2
+                                    <b>Clima: Nublado /</b>
+                                else if detalle.tipo_clima==3
+                                    <b>Clima: Lluvia suave </b>
+                                else if detalle.tipo_clima==4
+                                    <b>Clima: Lluvia fuerte </b>
+
+                                </p>
+                                if detalle.foto1==true
+                                    a(href=url+'/api/tracking_detalle/photo1/'+detalle.str1_encrypt+'/'+detalle.str2_encrypt) Foto1 
+                                if detalle.foto2==true
+                                    a(href=url+'/api/tracking_detalle/photo2/'+detalle.str1_encrypt+'/'+detalle.str2_encrypt) | Foto2
+                                if detalle.foto3==true
+                                    a(href=url+'/api/tracking_detalle/photo3/'+detalle.str1_encrypt+'/'+detalle.str2_encrypt) | Foto3
+
+                        if detalle.estado_carga==1
+                            div(class='card-red')
+                                strong(class='card-title-white') #{detalle.producto} (Dañado)
+                                <p>#{detalle.cantidad_bultos} bultos<span class="slash">/</span>#{detalle.volumen} m³<span class="slash">/</span>#{detalle.peso} kg </p>
+                                <p>
+                                if detalle.tipo_camion==1
+                                    <b>Camión Cerrado /</b>
+                                else if detalle.tipo_camion==2
+                                    <b>Camión Abierto /</b>
+                                
+                                if detalle.tipo_almacenado==1
+                                    <b>Almacenado Interior /</b>
+                                else if detalle.tipo_almacenado==2
+                                    <b>Almacenado Exterior /</b>
+
+                                if detalle.tipo_almacenado_techo==1
+                                    <b>Bajo techo: Si /</b>
+                                else if detalle.tipo_almacenado_techo==2
+                                    <b>Bajo techo: No /</b>
+
+                                if detalle.tipo_clima==1
+                                    <b>Clima: Soleado/</b>
+                                else if detalle.tipo_clima==2
+                                    <b>Clima: Nublado /</b>
+                                else if detalle.tipo_clima==3
+                                    <b>Clima: Lluvia suave </b>
+                                else if detalle.tipo_clima==4
+                                    <b>Clima: Lluvia fuerte </b>
+
+                                </p>
+                                if detalle.foto1==true
+                                    a(href=url+'/api/tracking_detalle/photo1/'+detalle.str1_encrypt+'/'+detalle.str2_encrypt) Foto1 
+                                if detalle.foto2==true
+                                    a(href=url+'/api/tracking_detalle/photo2/'+detalle.str1_encrypt+'/'+detalle.str2_encrypt) | Foto2
+                                if detalle.foto3==true
+                                    a(href=url+'/api/tracking_detalle/photo3/'+detalle.str1_encrypt+'/'+detalle.str2_encrypt) | Foto3
+
+                        if detalle.estado_carga==2
+                            div(class='card-blue')
+                                strong(class='card-title-white') #{detalle.producto} (Humedad)
+                                <p>#{detalle.cantidad_bultos} bultos<span class="slash">/</span>#{detalle.volumen} m³<span class="slash">/</span>#{detalle.peso} kg </p>
+                                <p>
+                                if detalle.tipo_camion==1
+                                    <b>Camión Cerrado /</b>
+                                else if detalle.tipo_camion==2
+                                    <b>Camión Abierto /</b>
+                                
+                                if detalle.tipo_almacenado==1
+                                    <b>Almacenado Interior /</b>
+                                else if detalle.tipo_almacenado==2
+                                    <b>Almacenado Exterior /</b>
+
+                                if detalle.tipo_almacenado_techo==1
+                                    <b>Bajo techo: Si /</b>
+                                else if detalle.tipo_almacenado_techo==2
+                                    <b>Bajo techo: No /</b>
+
+                                if detalle.tipo_clima==1
+                                    <b>Clima: Soleado /</b>
+                                else if detalle.tipo_clima==2
+                                    <b>Clima: Nublado /</b>
+                                else if detalle.tipo_clima==3
+                                    <b>Clima: Lluvia suave </b>
+                                else if detalle.tipo_clima==4
+                                    <b>Clima: Lluvia fuerte </b>
+
+                                </p>
+                                if detalle.foto1==true
+                                    a(href=url+'/api/tracking_detalle/photo1/'+detalle.str1_encrypt+'/'+detalle.str2_encrypt) Foto1 
+                                if detalle.foto2==true
+                                    a(href=url+'/api/tracking_detalle/photo2/'+detalle.str1_encrypt+'/'+detalle.str2_encrypt) | Foto2
+                                if detalle.foto3==true
+                                    a(href=url+'/api/tracking_detalle/photo3/'+detalle.str1_encrypt+'/'+detalle.str2_encrypt) | Foto3
+                    
+        div(class='container') 
+            p Muchas gracias
+
+            if comercial!=null 
+                    <p><strong> #{comercial.nombre} </strong></p>
+                    <p><strong> #{comercial.telefono} </strong></p>
+            if comercial!=null && comercial.telefono!=null 
+                p 
+                    strong 
+                        a(href='https://api.whatsapp.com/send?phone='+comercial.telefono) Whatsapp
+
+            div(class='border')
+
+        table(style="width:auto; border: none; font-family: Arial, Helvetica, sans-serif; font-size: 12px;")
+            tr
+                th(style="align-content: left; text-align: left; background-color: #D6D6D6; padding: 10px;") 
+                td
+                        img(src="https://static.wixstatic.com/media/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.png/v1/fill/w_250,h_86,al_c,q_85,usm_0.66_1.00_0.01/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.webp",style='width:150px;height:60px;')
+                td 
+                    <p> <strong>WS Cargo SPA</strong>   
+                    <p> Oficina: Av Andrés Bello 2299, Of 701, Providencia
+                    <p> Bodega:  Camino Noviciado N° 1945, comuna de Pudahuel, Región Metropolitana

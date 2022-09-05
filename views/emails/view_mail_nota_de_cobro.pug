@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        meta(http-equiv="X-UA-Compatible", content="ie=edge")
+        
+    body
+        p(style="line-height:1; margin: 0 !important;") Este correo es enviado de manera automática, favor no responder este correo.
+        p(style="line-height:1; margin: 0 !important;") Estimado(a) 
+
+        if correo_sin_din === 'true'
+
+            p(style="line-height:1; margin: 0 !important;") Junto con saludar, adjuntamos <strong>la nota de cobro por nuestros servicios.</strong>
+            p(style="line-height:1; margin: 0 !important;") Te recordamos que el valor del IVA será informado una vez liberada tu carga.  
+            br
+            p(style="line-height:1; margin: 0 !important;") Puedes pagar la nota de cobro mediante de transferencia en <strong>pesos o dólares.</strong>  
+            br
+            p(style="line-height:1; margin: 0 !important;") Una vez realizado el pago <strong>ENVIA EL COMPROBANTE (LEGIBLE) a pagos@wscargo.cl  y a tu ejecutivo(a) con el asunto 
+                =asunto
+            </strong> 
+            br
+            p(style="line-height:1; margin: 0 !important;") Datos de transferencia: 
+            br
+            p(style="line-height:1; margin: 0 !important;") <strong> Cuenta PESOS: </strong>
+            p(style="line-height:1; margin: 0 !important;") Banco: Santander 
+            p(style="line-height:1; margin: 0 !important;") N° Cuenta Cte: 75853041  
+            p(style="line-height:1; margin: 0 !important;") RUT: 77.166.807-0 
+            p(style="line-height:1; margin: 0 !important;") Razón social: WS Cargo SpA  
+            p(style="line-height:1; margin: 0 !important;") Correo: pagos@wscargo.cl 
+            p(style="line-height:1; margin: 0 !important;") Asunto: <strong>
+                =asunto
+            </strong> 
+            br
+            p(style="line-height:1; margin: 0 !important;") <strong> Cuenta DÓLARES: </strong>
+            p(style="line-height:1; margin: 0 !important;") Banco: Santander 
+            p(style="line-height:1; margin: 0 !important;") N° Cuenta: 5100479950 
+            p(style="line-height:1; margin: 0 !important;") RUT: 77.166.807-0 
+            p(style="line-height:1; margin: 0 !important;") Razón social: WS Cargo SpA 
+            p(style="line-height:1; margin: 0 !important;") Correo: pagos@wscargo.cl 
+            p(style="line-height:1; margin: 0 !important;") Asunto: <strong>
+                =asunto
+            </strong> 
+            br
+
+        else 
+            p(style="line-height:1; margin: 0 !important;") Junto con saludar, adjuntamos <strong>DIN</strong> para poder cerrar el proceso de pago y puedas recibir tu carga.
+            br
+            p(style="line-height:1; margin: 0 !important;") El valor a <u>pagar va indicado en la columna cuentas y valores</u> en <strong>código 91 dentro del documento DIN</strong>
+            br
+            p(style="line-height:1; margin: 0 !important;") Recuerda que una vez que llegue tu contenedor a nuestra bodega en Santiago, será informado por tu ejecutivo(a) 
+                =nombre_com  
+            br
+            p(style="line-height:1; margin: 0 !important;") No olvides que una vez realizado el pago <strong>ENVIA EL COMPROBANTE (LEGIBLE) a pagos@wscargo.cl  y a tu ejecutivo (a) con el asunto 
+                =asunto
+            </strong> 
+            br
+            p(style="line-height:1; margin: 0 !important;") <strong> Cuenta PESOS: </strong>
+            p(style="line-height:1; margin: 0 !important;") Banco: Santander 
+            p(style="line-height:1; margin: 0 !important;") N° Cuenta Cte: 75853041  
+            p(style="line-height:1; margin: 0 !important;") RUT: 77.166.807-0 
+            p(style="line-height:1; margin: 0 !important;") Razón social: WS Cargo SpA  
+            p(style="line-height:1; margin: 0 !important;") Correo: pagos@wscargo.cl 
+            p(style="line-height:1; margin: 0 !important;") Asunto: <strong>
+                =asunto
+            </strong> 
+            br
+
+        br
+        p(style="line-height:1; margin: 0 !important;") Ante cualquier duda contacta a tu ejecutivo  
+        p(style="line-height:1; margin: 0 !important;") Saludos cordiales 
+        p(style="line-height:1; margin: 0 !important;") Equipo WS Cargo

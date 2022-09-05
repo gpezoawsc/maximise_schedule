@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        meta(http-equiv="X-UA-Compatible", content="ie=edge")
+        style
+            include ./notif_1.css
+    body
+        div(class='title-principal')
+            img(src="https://static.wixstatic.com/media/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.png/v1/fill/w_250,h_86,al_c,q_85,usm_0.66_1.00_0.01/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.webp",style='width:150px;height:60px;')
+
+        div(class='container')
+            p(class='texto') Hola #{nombreUsuario}
+            p(class='texto') Para continuar con tu proceso de importación, es necesario que nos envíes alguno de los siguientes documentos donde conste el poder del representante legal:
+            p(class='texto') • Escritura constitución: si tu empresa fue creada con el sistema de “Empresa en un día”, puedes enviarnos una escritura actualizada.
+            p(class='texto') • Vigencia de poder emitido por conservador de bienes raíces.   
+
+            p(class='texto') Puedes cargar el o los documentos iniciando sesión en nuestra <strong> 
+                <a href='http://localhost:3003/'> plataforma digital</a>.</strong> O puedes adjuntar el archivo respondiendo a este correo.
+            p(class='texto') La documentación pasará por un proceso de validación. Si está de acuerdo con lo requerido, continuaremos con tu proceso de importación.
+            p(class='texto') Recuerda que frente a cualquier duda, te puedes contactar conmigo.
+
+        div(class='container') 
+            p Muchas gracias
+
+            if comercial!=null 
+                    <p><strong> #{comercial.nombre} </strong></p>
+                    <p><strong> #{comercial.telefono} </strong></p>
+            if comercial!=null && comercial.telefono!=null 
+                p 
+                    strong 
+                        a(href='https://api.whatsapp.com/send?phone='+comercial.telefono) Whatsapp
+
+        div(class='border')    
+
+                  
+        table(style="width:auto; border: none; font-family: Arial, Helvetica, sans-serif; font-size: 12px;")
+            tr
+                th(style="align-content: left; text-align: left; background-color: #D6D6D6; padding: 10px;") 
+                td
+                        img(src="https://static.wixstatic.com/media/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.png/v1/fill/w_250,h_86,al_c,q_85,usm_0.66_1.00_0.01/f09af8_12d41aaedbdc4213b27badbacada73e7~mv2.webp",style='width:150px;height:60px;')
+                td 
+                    <p> <strong>WS Cargo SPA</strong>   
+                    <p> Oficina: Av Andrés Bello 2299, Of 701, Providencia
+                    <p> Bodega:  Camino Noviciado N° 1945, comuna de Pudahuel, Región Metropolitana
