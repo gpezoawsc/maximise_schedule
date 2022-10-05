@@ -9,7 +9,6 @@ const path = require('path');
 const axios = require("axios");
 const { json } = require('body-parser');
 const e = require('express');
-const { listGcConsolidadoByClient } = require('./consolidadosCtrl');
 
 exports.FirmaDigital_EnviarEnrolamiento = async (fk_cliente) => {
 
