@@ -932,7 +932,10 @@ exports.orquestador = async (req, resp) => {
                             console.log("CLIENTE NO TIENE CORREO DE COMERCIAL");
                         } else {
                         
-                            let asunto = `WS Cargo | Documentación de tu servicio ${Lista.rows[0].fk_servicio}/${Lista.rows[0].n_referencia}`;
+                            let asunto = `WS Cargo | Documentación de tu servicio N°${Lista.rows[0].fk_servicio}`;
+                            if (Lista.rows[0].n_referencia != null) {
+                                asunto += `/${Lista.rows[0].n_referencia}`
+                            }
 
                             let info_extra = {
                                 razon_social: Lista.rows[0]['razonSocial'],
@@ -956,7 +959,7 @@ exports.orquestador = async (req, resp) => {
                             }
 
                             let envio=await emailHandler.insertEmailQueue({
-                                para:'gabriel.pezoa@wscargo.cl',//correo_cli,
+                                para:correo_cli,
                                 asunto:asunto,
                                 fecha:null,
                                 texto:null,
@@ -969,7 +972,7 @@ exports.orquestador = async (req, resp) => {
                                 datos_adicionales:JSON.stringify(info_extra),
                                 datos:null,
                                 tipo_id:null,
-                                copia:'',//correo_com + ', gestion@wscargo.cl, pagos@wscargo.cl, tomas.godoy@wscargo.cl, marcela.illanes@wscargo.cl',
+                                copia:correo_com + ', gestion@wscargo.cl, pagos@wscargo.cl, tomas.godoy@wscargo.cl, marcela.illanes@wscargo.cl',
                                 copia_oculta:null
                             });
                         }
