@@ -424,10 +424,6 @@ exports.orquestador = async (req, resp) => {
                                 xmltext_aux += `<DISC_PER>`+detalles.rows[i]['disc_per']+`</DISC_PER>`;
                                 xmltext_aux += `<UNIT_SALE_AMT>`+detalles.rows[i]['unit_sale_amt']+`</UNIT_SALE_AMT>`;
                                 xmltext_aux += `<EXT_SALE_AMT>`+detalles.rows[i]['ext_sale_amt']+`</EXT_SALE_AMT>`;
-
-                                xmltext_aux += facturas.rows[0]['doc_code']!='DI'? `<UNIT_SALE_AMT>`+monto+`</UNIT_SALE_AMT>` : `<UNIT_SALE_AMT>`+detalles.rows[0]['unit_sale_amt']+`</UNIT_SALE_AMT>`;
-                                xmltext_aux += facturas.rows[0]['doc_code']!='DI'? `<EXT_SALE_AMT>`+monto+`</EXT_SALE_AMT>` : `<EXT_SALE_AMT>`+detalles.rows[0]['ext_sale_amt']+`</EXT_SALE_AMT>`;
-
                                 xmltext_aux += `<UNIT_EXCENT_AMT>`+detalles.rows[i]['unit_excent_amt']+`</UNIT_EXCENT_AMT>`;
                                 xmltext_aux += `<EXT_EXCENT_AMT>`+detalles.rows[i]['ext_excent_amt']+`</EXT_EXCENT_AMT>`;
                                 xmltext_aux += `<UNIT_TAX_AMT>`+detalles.rows[i]['unit_taxt_amt']+`</UNIT_TAX_AMT>`;
