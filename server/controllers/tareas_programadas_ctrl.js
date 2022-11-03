@@ -923,8 +923,8 @@ exports.orquestador = async (req, resp) => {
                         
                         `);
 
-                        var correo_cli = correo.rows[0]['dteEmail'];
-                        var correo_com = correo.rows[0]['email'];
+                        var correo_cli = 'gabriel.pezoa@wscargo.cl';//Lista.rows[0]['dteEmail'];
+                        var correo_com = '';//Lista.rows[0]['email'];
 
                         if ( correo_cli == '' ||  correo_cli == undefined ||  correo_cli == null) {
                             console.log("CLIENTE NO TIENE CORREO DE CONTACTO");
@@ -935,7 +935,7 @@ exports.orquestador = async (req, resp) => {
                             let asunto = `WS Cargo | Documentación de tu servicio ${Lista.rows[0].fk_servicio}/${Lista.rows[0].n_referencia}`;
 
                             let info_extra = {
-                                razon_social: correo.rows[0]['razonSocial'],
+                                razon_social: Lista.rows[0]['razonSocial'],
                                 fk_servicio: Lista.rows[0].fk_servicio,
                                 n_referencia: Lista.rows[0].n_referencia,
                                 contenedor: Lista.rows[0].contenedor,
