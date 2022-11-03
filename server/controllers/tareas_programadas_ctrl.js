@@ -923,8 +923,8 @@ exports.orquestador = async (req, resp) => {
                         
                         `);
 
-                        var correo_cli = 'gabriel.pezoa@wscargo.cl';//Lista.rows[0]['dteEmail'];
-                        var correo_com = '';//Lista.rows[0]['email'];
+                        var correo_cli = Lista.rows[0]['dteEmail'];
+                        var correo_com = Lista.rows[0]['email'];
 
                         if ( correo_cli == '' ||  correo_cli == undefined ||  correo_cli == null) {
                             console.log("CLIENTE NO TIENE CORREO DE CONTACTO");
