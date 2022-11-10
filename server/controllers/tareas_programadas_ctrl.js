@@ -3058,7 +3058,7 @@ exports.generarPdfFacturas = async (req, resp) => {
             
             response_req.on('response', function (res) {
 
-                res.pipe(fs.createWriteStream('C:/Users/Gabriel/Desktop/WSC/BACKEND/public/files/facturas_cws/'+facturas.rows[0]['ref_text2']+'_'+facturas.rows[0]['ref_text1']+'.pdf'));
+                res.pipe(fs.createWriteStream('C:/Users/Administrator/Documents/wscargo/restserver/public/files/facturas_cws/'+facturas.rows[0]['ref_text2']+'_'+facturas.rows[0]['ref_text1']+'.pdf'));
                 console.log("FACTURA DESCARGADA");
                 update_nombre_archivo(facturas.rows[0]['id'], facturas.rows[0]['ref_text2']);
 
