@@ -3002,3 +3002,78 @@ exports.orquestador = async (req, resp) => {
         }
     }
 }
+
+
+exports.generarPdfFacturas = async (req, resp) => {
+    var sche_generarPdfFacturas = require('node-schedule');
+
+    sche_generarPdfFacturas.scheduleJob('*/30 * * * * *', () => {
+        console.log("");
+        console.log("DESCARGANDO FACTURA CWS");
+        generarPdfFacturas();
+
+    });
+
+    async function generarPdfFacturas()
+    {
+
+        var facturas = await client.query(` SELECT * FROM public.wsc_envio_facturas_cabeceras2 where cmpy_code='03' AND max_id_interno<>0 and archivofactura='0' limit 1 `);
+        
+        if(facturas.rows.length>0)
+        {
+            console.log(" CONSULTANDO FACTURA " + facturas.rows[0]['ref_text2'] + ' de ' + facturas.rows[0]['ref_text1']);
+            update_nombre_archivo(facturas.rows[0]['id'], 'PROCESANDO');
+
+            const request = require('request');
+            const fs = require("fs"); 
+
+            const data = {
+                AliasName: 'dwi_tnm',
+                UserName: 'webservice',
+                Password: 'webservice001',
+                DocumentNumber: facturas.rows[0]['max_id_interno'],
+                Company: facturas.rows[0]['cmpy_code']
+            };
+            
+            const options = {
+                url: 'http://asp3.maximise.cl/wsv/Invoice.asmx/DownloadPdf',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/html',
+                    'Content-Length': data.length
+                },
+                json: true,
+                form: {
+                    AliasName: 'dwi_tnm',
+                    UserName: 'webservice',
+                    Password: 'webservice001',
+                    DocumentNumber: facturas.rows[0]['max_id_interno'],
+                    Company:  facturas.rows[0]['cmpy_code']
+                }
+            };
+    
+            const response_req = request.post(options, (err, res, body) => {
+                
+            });
+            
+            response_req.on('response', function (res) {
+
+                res.pipe(fs.createWriteStream('C:/Users/Gabriel/Desktop/WSC/BACKEND/public/files/facturas_cws/'+facturas.rows[0]['ref_text2']+'_'+facturas.rows[0]['ref_text1']+'.pdf'));
+                console.log("FACTURA DESCARGADA");
+                update_nombre_archivo(facturas.rows[0]['id'], facturas.rows[0]['ref_text2']);
+
+            });
+            return "OK";
+            
+        } else {
+            console.log("NO QUEDAN MAS FACTURAS POR DESCARGAR");
+
+        }
+        
+        async function update_nombre_archivo(id, archivo)
+        {
+            console.log(` UPDATE public.wsc_envio_facturas_cabeceras2 SET archivofactura='`+archivo+`' where id=`+id+` `);
+            await client.query(` UPDATE public.wsc_envio_facturas_cabeceras2 SET archivofactura='`+archivo+`' where id=`+id+` `);
+        }
+    }
+}
