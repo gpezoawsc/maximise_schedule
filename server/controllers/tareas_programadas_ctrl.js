@@ -2624,7 +2624,7 @@ exports.orquestador = async (req, resp) => {
     
                             if (documentos.length == 0) {
                                 //DINERO SE IRA A EXCEDENTE, PERO HAY CAMPOS QUE DEBO CONSULTAR DESDE OTRA FUENTE
-                                resp_cust_code = get_cliente_rut(pago.cliente.split(' ')[0]);
+                                resp_cust_code = await get_cliente_rut(pago.cliente.split(' ')[0]);
                                 if (resp_cust_code == false) {
                                     return false;
                                 }
