@@ -2487,7 +2487,7 @@ exports.orquestador = async (req, resp) => {
             xmltext_aux += `<DEBIT_AMT>`+ debit_amt +`</DEBIT_AMT>`;
             xmltext_aux += `<CREDIT_AMT>`+ credit_amt +`</CREDIT_AMT>`;
             xmltext_aux += `<POST_FLAG>`+ post_flag +`</POST_FLAG>`;
-            xmltext_aux += `<COM_TEXT>`+ com_text + insert.rows[0]['id'] +`</COM_TEXT>`;
+            xmltext_aux += `<COM_TEXT>`+ com_text +`</COM_TEXT>`;
             xmltext_aux += `<CLEARED_FLAG>`+ cleared_flag +`</CLEARED_FLAG>`;
             xmltext_aux += `<CONTROL_AMT>`+ control_amt +`</CONTROL_AMT>`;
             xmltext_aux += `<DEBIT_AMT1>`+ debit_amt1 +`</DEBIT_AMT1>`;
