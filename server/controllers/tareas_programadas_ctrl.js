@@ -109,7 +109,7 @@ exports.orquestador = async (req, resp) => {
                                         WHERE ih.cmpy_code='04' and 
                                             ih.POSTED_FLAG<>'V' and
                                             ih.ref_text1='${facturas.rows[0]['ref_text1']}' and
-                                            ((ih.doc_code='${facturas.rows[0]['doc_code']}' and ih.com_text LIKE '${facturas.rows[0]['com_text'].split(' ')[0]}%')
+                                            ((ih.doc_code='${facturas.rows[0]['doc_code']}' and (ih.com_text LIKE '${facturas.rows[0]['com_text'].split(' ')[0]}%' OR ih.com_text LIKE '%${facturas.rows[0]['com_text'].split(' ')[0]}%'))
                                                 or ih.doc_code='D1')
                                         ORDER BY ih.inv_num DESC;  
                                     `;
