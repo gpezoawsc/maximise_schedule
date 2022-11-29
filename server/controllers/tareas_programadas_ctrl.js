@@ -104,7 +104,7 @@ exports.orquestador = async (req, resp) => {
 
                     const xmltext = `
                                         SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num, 
-                                        (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND (CMPY_CODE='02' OR CMPY_CODE='03' OR CMPY_CODE='04')) as total_credito
+                                        (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND CMPY_CODE='04') as total_credito
                                         FROM invoicehead ih
                                         WHERE ih.cmpy_code='04' and 
                                             ih.POSTED_FLAG<>'V' and
@@ -1035,7 +1035,7 @@ exports.orquestador = async (req, resp) => {
 
                     const xmltext = `
                                         SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num, 
-                                        (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND (CMPY_CODE='02' OR CMPY_CODE='03' OR CMPY_CODE='04')) as total_credito
+                                        (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND CMPY_CODE='03') as total_credito
                                         FROM invoicehead ih
                                         WHERE ih.cmpy_code='03' and 
                                             ih.POSTED_FLAG<>'V' and
