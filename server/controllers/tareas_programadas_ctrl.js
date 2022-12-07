@@ -109,8 +109,13 @@ exports.orquestador = async (req, resp) => {
                                         WHERE ih.cmpy_code='04' and 
                                             ih.POSTED_FLAG<>'V' and
                                             ih.ref_text1='${facturas.rows[0]['ref_text1']}' and
-                                            ((ih.doc_code='${facturas.rows[0]['doc_code']}' and (ih.com_text LIKE '${facturas.rows[0]['com_text'].split(' ')[0]}%' OR ih.com_text LIKE '%${facturas.rows[0]['com_text'].split(' ')[0]}%'))
-                                                or ih.doc_code='D1')
+                                            ((ih.doc_code='${facturas.rows[0]['doc_code']}' and 
+                                            (
+                                                ((ih.com_text like 'EXENTO%' OR ih.com_text LIKE '%EXENTO%' or ih.com_text like 'AFECTO%' OR ih.com_text LIKE '%AFECTO%') and ih.com_text like '${facturas.rows[0]['com_text'].split(' ')[0]}%' OR ih.com_text LIKE '%${facturas.rows[0]['com_text'].split(' ')[0]}%')
+                                                or
+                                                not (ih.com_text like 'EXENTO%' OR ih.com_text LIKE '%EXENTO%' or ih.com_text like 'AFECTO%' OR ih.com_text LIKE '%AFECTO%')
+                                            )
+                                            ) or ih.doc_code='D1')
                                         ORDER BY ih.inv_num DESC;  
                                     `;
 
@@ -3074,6 +3079,171 @@ exports.generarPdfFacturas = async (req, resp) => {
         {
             console.log(` UPDATE public.wsc_envio_facturas_cabeceras2 SET archivofactura='`+archivo+`' where id=`+id+` `);
             await client.query(` UPDATE public.wsc_envio_facturas_cabeceras2 SET archivofactura='`+archivo+`' where id=`+id+` `);
+        }
+    }
+}
+
+exports.generarTgr = async (req, resp) => {
+    var sche_generarPdfFacturas = require('node-schedule');
+
+    sche_generarPdfFacturas.scheduleJob('*/45 * * * * *', () => {
+        console.log("");
+        console.log("DESCARGANDO TGR");
+        generarTgr();
+
+    });
+
+    async function generarTgr()
+    {
+
+        const request = require('request');
+
+        const img_dir = 'C:/Users/Administrator/Documents/maximise_schedule/public/tgr/imagenes';
+        const save_dir = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/tgr/';
+
+        var pendiente = await client.query(` SELECT * FROM public.queue_tgr WHERE estado='PENDIENTE' ORDER BY id ASC limit 1 `);
+        
+        if(pendiente.rows.length>0)
+        {
+
+            const id = pendiente.rows[0].id;
+
+            const rut = pendiente.rows[0].rut.split('-')[0];
+            const dv = pendiente.rows[0].rut.split('-')[1];
+            const folio = pendiente.rows[0].folio.split('-')[0];
+
+            update_estado(id, 'PROCESANDO');
+
+
+            const data = {
+                rut: rut,
+                dv: dv,
+                formulario: '15',
+                folio: folio,
+                button: 'Enviar'
+            };
+
+            const options = {
+                url: 'https://www.tesoreria.cl/portal/comprobantePago/goListaPagos.do',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain',
+                    'Content-Length': data.length
+                },
+                json: true,
+                form: {
+                    rut: rut,
+                    dv: dv,
+                    formulario: '15',
+                    folio: folio,
+                    button: 'Enviar'
+                }
+            };
+
+            request.post(options, (err, res, body) => {
+
+                if(err) 
+                { 
+                    console.log(" --------------------------- ERROR REPORT ");
+                    console.log(" --------------------------- ERROR REPORT "+JSON.stringify(err)); 
+                    console.log(" --------------------------- ERROR REPORT ");
+                    console.log("  ");
+                    console.log("  ");
+                    console.log("  ");
+                    update_estado(id, 'ERROR GET');
+
+                }
+                else if(body) 
+                {   
+
+                    let aux_body = body.replace('/web/Contenido/ImagenesSitio/logos/logo_teso1.png', '{{logo_teso1}}');
+                    aux_body = aux_body.replace('/web/Contenido/ImagenesSitio/TimbreInternetPagado.jpg', '{{TimbreInternetPagado}}');
+                    aux_body = aux_body.replace('/web/Contenido/ImagenesSitio/Firma_JefeOperaciones.jpg', '{{Firma_JefeOperaciones}}');
+
+                    const regex = /<td id=(")bcTarget(")><input type=(")hidden(") value=(")\w+(") id=(")codigoBarra(")/;
+                    const re_linea = /\d+/g;
+
+                    const id_codigo = aux_body.match(regex)[0].match(re_linea)[0];
+
+                    /**         SE CREA QR           **/
+                    const JsBarcode = require('jsbarcode');
+
+                    var { createCanvas } = require("canvas");
+                    var canvas = createCanvas();
+
+                    JsBarcode(canvas, id_codigo, {
+                        width:2,
+                        height:80,
+                        fontSize: 12,
+                        font: 'Arial'
+                    });
+
+                    try {
+                        fs.writeFileSync(img_dir + 'barcode.png', canvas.toBuffer())
+
+                    } catch (err) {
+                        console.log(err)
+                        update_estado(id, 'ERROR BARCODE');
+
+                    }
+
+
+                    /**             SE INCLUYE EN HTML Y SE GENERA IMAGEN               **/
+
+                    let html_codigo = `
+                            <td align="center">
+                                <img src="{{barcode}}" alt="barcode" >
+                            </td>
+                        </tr>
+                        <tr>
+                    `;
+
+
+                    let aux_body2 = aux_body.split(/<td id="bcTarget"><input type="hidden" value="[\s\S\n\r^]*<\/td>[\s\S\n\r^]*<tr>/g).join(html_codigo);
+
+                    let aux_body3 = aux_body2.split('Google Tag Manager')
+
+                    let aux_body4 = aux_body3[0] + aux_body3[2] + aux_body3[4];
+
+                    const nodeHtmlToImage = require('node-html-to-image')
+
+                    const image = fs.readFileSync(img_dir + 'barcode.png');
+                    const base64Image = new Buffer.from(image).toString('base64');
+                    const dataURI = 'data:image/jpeg;base64,' + base64Image
+
+                    const image2 = fs.readFileSync(img_dir + 'logo_teso1.png');
+                    const base64Image2 = new Buffer.from(image2).toString('base64');
+                    const dataURI2 = 'data:image2/jpeg;base64,' + base64Image2
+
+                    const image3 = fs.readFileSync(img_dir + 'TimbreInternetPagado.jpg');
+                    const base64Image3 = new Buffer.from(image3).toString('base64');
+                    const dataURI3 = 'data:image3/jpeg;base64,' + base64Image3
+
+                    const image4 = fs.readFileSync(img_dir + 'Firma_JefeOperaciones.jpg');
+                    const base64Image4 = new Buffer.from(image4).toString('base64');
+                    const dataURI4 = 'data:image4/jpeg;base64,' + base64Image4
+
+                    nodeHtmlToImage({
+                        output: save_dir + 'TGR' + folio.substring(folio.length-5) + '.jpg',
+                        html: aux_body4,
+                        content: { barcode: dataURI, logo_teso1: dataURI2, TimbreInternetPagado: dataURI3, Firma_JefeOperaciones: dataURI4 },
+                    })
+
+                    fs.unlinkSync(img_dir + 'barcode.png');
+                    update_estado(id, 'DESCARGADO');
+                }
+
+            });
+            
+        } else {
+            console.log("NO QUEDAN TGR POR GENERAR");
+
+        }
+        
+        async function update_estado(id, estado)
+        {
+            console.log(` UPDATE public.queue_tgr SET estado='`+estado+`' where id=`+id+` `);
+            await client.query(` UPDATE public.queue_tgr SET estado='`+estado+`' where id=`+id+` `);
         }
     }
 }
