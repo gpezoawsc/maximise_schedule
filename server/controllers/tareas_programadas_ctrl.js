@@ -960,8 +960,37 @@ exports.orquestador = async (req, resp) => {
                                 din_file: 'DIN'+Lista.rows[0].din+'.pdf',
                                 din_file_path: 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/din/DIN'+Lista.rows[0].din+'.pdf',
                                 fact_file: 'FACTURA_'+n_carpeta+'.pdf',
-                                fact_file_path: 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/fact_cargar_por_contenedor/'+n_carpeta+'.pdf'
+                                fact_file_path: 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/fact_cargar_por_contenedor/'+n_carpeta+'.pdf',
+                                explicativo_file: 'INFORMATIVO.pdf',
+                                explicativo_file_path: 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/documento_explicativo.pdf'
                             }
+
+                            /**         REVISO SI EXISTEN MAS DOCUMENTOS            **/
+                            if (fs.existsSync('C:/Users/Administrator/Documents/wscargo/restserver/public/files/facturas_cws/PALLET_'+n_carpeta+'.pdf')) {
+                                files['cws_pallet_file'] = 'PALLET_'+n_carpeta+'.pdf';
+                                files['cws_pallet_file_path'] = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/facturas_cws/PALLET_'+n_carpeta+'.pdf';
+                            }
+
+                            if (fs.existsSync('C:/Users/Administrator/Documents/wscargo/restserver/public/files/facturas_cws/TVP_'+n_carpeta+'.pdf')) {
+                                files['cws_tvp_file'] = 'TVP_'+n_carpeta+'.pdf';
+                                files['cws_tvp_file_path'] = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/facturas_cws/TVP_'+n_carpeta+'.pdf';
+                            }
+
+                            if (fs.existsSync('C:/Users/Administrator/Documents/wscargo/restserver/public/files/facturas_cws/OTROS_'+n_carpeta+'.pdf')) {
+                                files['cws_otros_file'] = 'OTROS_'+n_carpeta+'.pdf';
+                                files['cws_otros_file_path'] = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/facturas_cws/OTROS_'+n_carpeta+'.pdf';
+                            }
+
+                            if (fs.existsSync('C:/Users/Administrator/Documents/wscargo/restserver/public/files/facturas_agencia/FA'+Lista.rows[0].din+'.pdf')) {
+                                files['agencia_file'] = 'AGENCIA_'+Lista.rows[0].din+'.pdf';
+                                files['agencia_file_path'] = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/facturas_agencia/FA'+Lista.rows[0].din+'.pdf';
+                            }
+
+                            if (fs.existsSync('C:/Users/Administrator/Documents/wscargo/restserver/public/files/tgr/TGR'+Lista.rows[0].din+'.pdf')) {
+                                files['tgr_file'] = 'TGR_'+Lista.rows[0].din+'.jpg';
+                                files['tgr_file_path'] = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/tgr/TGR'+Lista.rows[0].din+'.jpg';
+                            }
+
 
                             let envio=await emailHandler.insertEmailQueue({
                                 para:correo_cli,
@@ -3098,8 +3127,11 @@ exports.generarTgr = async (req, resp) => {
 
         const request = require('request');
 
-        const img_dir = 'C:/Users/Administrator/Documents/maximise_schedule/public/tgr/imagenes';
-        const save_dir = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/tgr/';
+        const img_dir = 'C:/Users/Gabriel/Desktop/WSC/maximise_schedule/public/tgr/imagenes/';
+        const save_dir = 'C:/Users/Gabriel/Desktop/WSC/BACKEND/public/files/tgr/';
+
+        //const img_dir = 'C:/Users/Administrator/Documents/maximise_schedule/public/tgr/imagenes/';
+        //const save_dir = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/tgr/';
 
         var pendiente = await client.query(` SELECT * FROM public.queue_tgr WHERE estado='PENDIENTE' ORDER BY id ASC limit 1 `);
         
