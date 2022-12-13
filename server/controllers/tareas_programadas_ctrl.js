@@ -3127,11 +3127,11 @@ exports.generarTgr = async (req, resp) => {
 
         const request = require('request');
 
-        const img_dir = 'C:/Users/Gabriel/Desktop/WSC/maximise_schedule/public/tgr/imagenes/';
-        const save_dir = 'C:/Users/Gabriel/Desktop/WSC/BACKEND/public/files/tgr/';
+        //const img_dir = 'C:/Users/Gabriel/Desktop/WSC/maximise_schedule/public/tgr/imagenes/';
+        //const save_dir = 'C:/Users/Gabriel/Desktop/WSC/BACKEND/public/files/tgr/';
 
-        //const img_dir = 'C:/Users/Administrator/Documents/maximise_schedule/public/tgr/imagenes/';
-        //const save_dir = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/tgr/';
+        const img_dir = 'C:/Users/Administrator/Documents/maximise_schedule/public/tgr/imagenes/';
+        const save_dir = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/tgr/';
 
         var pendiente = await client.query(` SELECT * FROM public.queue_tgr WHERE estado='PENDIENTE' ORDER BY id ASC limit 1 `);
         
