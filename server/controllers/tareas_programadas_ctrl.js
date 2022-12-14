@@ -8,6 +8,7 @@ const { verify } = require('crypto');
 const path = require('path');
 const Notifications= require('../../handlers/notifications');
 const emailHandler = require('../../apis/emailHandler'); 
+const funcionesCompartidasCtrl = require('./funcionesCompartidasCtrl.js');
 
 
 
@@ -785,6 +786,14 @@ exports.orquestador = async (req, resp) => {
 
                                                     if(res2.data.estado_correo===true){
                                                         if(resultP.rows[i].email && resultP.rows[i].email.length>0){
+
+                                                            let comercial=null;
+                                                            let comer = funcionesCompartidasCtrl.get_comercial_vigente(resultP.rows[i].fk_cliente);
+                                                            if(comer && comer.rows && comer.rows.length>0){
+                                                                comercial=comer.rows[0];
+                                                            }
+
+                                                            /*
                                                             let comercial=null;
                                                             if(res2.data.fk_comercial && res2.data.fk_comercial!=null){
                                                                 let comer=await client.query(`SELECT concat(nombre,' ',apellidos) as nombre,email,telefono FROM public.usuario where id=`+res2.data.fk_comercial);
@@ -792,6 +801,7 @@ exports.orquestador = async (req, resp) => {
                                                                     comercial=comer.rows[0];
                                                                 }
                                                             }
+                                                            */
 
                                                             let asunto='';
                                                             let texto1='';
@@ -888,7 +898,7 @@ exports.orquestador = async (req, resp) => {
 
                         let Lista = await client.query(`
 
-                            SELECT pro.din, 
+                            SELECT pro.din, , cli.id as fk_cliente,
                             d.contenedor,
                             c."dteEmail", com.email, 
                             concat(com.nombre, ' ', com.apellidos) as nombre,
@@ -944,9 +954,17 @@ exports.orquestador = async (req, resp) => {
                                 contenedor: Lista.rows[0].contenedor,
                             }
             
+                            /*
                             let info_comercial = {
                                 nombre: Lista.rows[0].nombre,
                                 telefono: Lista.rows[0].telefono
+                            }
+                            */
+                            
+                            let info_comercial=null;
+                            let comer = funcionesCompartidasCtrl.get_comercial_vigente(Lista.rows[0].fk_cliente);
+                            if(comer && comer.rows && comer.rows.length>0){
+                                info_comercial=comer.rows[0];
                             }
 
                             let files = {
@@ -1663,6 +1681,14 @@ exports.orquestador = async (req, resp) => {
 
                                                     if(res2.data.estado_correo===true){
                                                         if(resultP.rows[i].email && resultP.rows[i].email.length>0){
+
+                                                            let comercial=null;
+                                                            let comer = funcionesCompartidasCtrl.get_comercial_vigente(resultP.rows[i].fk_cliente);
+                                                            if(comer && comer.rows && comer.rows.length>0){
+                                                                comercial=comer.rows[0];
+                                                            }
+
+                                                            /*
                                                             let comercial=null;
                                                             if(res2.data.fk_comercial && res2.data.fk_comercial!=null){
                                                                 let comer=await client.query(`SELECT concat(nombre,' ',apellidos) as nombre,email,telefono FROM public.usuario where id=`+res2.data.fk_comercial);
@@ -1670,6 +1696,7 @@ exports.orquestador = async (req, resp) => {
                                                                     comercial=comer.rows[0];
                                                                 }
                                                             }
+                                                            */
 
                                                             let asunto='';
                                                             let texto1='';

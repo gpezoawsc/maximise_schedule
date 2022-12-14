@@ -10,6 +10,51 @@ const axios = require("axios");
 const { json } = require('body-parser');
 const e = require('express');
 
+/**
+* @desc Obtiene el ultimo ejecutivo vigente por cliente
+* @param Cliente
+* @return informacion ejecutivo
+*/
+exports.get_comercial_vigente_data = async (Cliente) => {
+    
+    return await client.query(`
+    SELECT 
+    usu.rut,
+    usu.usuario,
+    usu.nombre,
+    usu.apellidos,
+    usu.email,
+    usu.telefono
+    FROM public.usuario as usu
+    inner join public.clientes as cli on 
+    case when cli.estado_consolidado='SI' and cli.fk_ejecutivocuenta is not null then usu.id=cli.fk_ejecutivocuenta
+    else usu.id=cli.fk_comercial end
+    where 
+    cli.id=`+Cliente+`
+    `);
+}
+
+/**
+* @desc Obtiene el ultimo ejecutivo vigente por cliente
+* @param Cliente
+* @return informacion ejecutivo
+*/
+exports.get_comercial_vigente = async (Cliente) => {
+    
+    return await client.query(`
+    SELECT 
+    concat(usu.nombre,' ',usu.apellidos) as nombre
+    ,usu.email
+    ,usu.telefono 
+    FROM public.usuario as usu
+    inner join public.clientes as cli on 
+    case when cli.estado_consolidado='SI' and cli.fk_ejecutivocuenta is not null then usu.id=cli.fk_ejecutivocuenta
+    else usu.id=cli.fk_comercial end
+    where 
+    cli.id=`+Cliente+`
+    `);
+}
+
 exports.FirmaDigital_EnviarEnrolamiento = async (fk_cliente) => {
 
     var Condicion = `
