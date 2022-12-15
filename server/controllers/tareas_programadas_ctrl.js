@@ -793,7 +793,7 @@ exports.orquestador = async (req, resp) => {
                                                         if(resultP.rows[i].email && resultP.rows[i].email.length>0){
 
                                                             let comercial=null;
-                                                            let comer = funcionesCompartidasCtrl.get_comercial_vigente(resultP.rows[i].fk_cliente);
+                                                            let comer = await funcionesCompartidasCtrl.get_comercial_vigente(resultP.rows[i].fk_cliente);
                                                             if(comer && comer.rows && comer.rows.length>0){
                                                                 comercial=comer.rows[0];
                                                             }
@@ -967,7 +967,7 @@ exports.orquestador = async (req, resp) => {
                             */
                             
                             let info_comercial=null;
-                            let comer = funcionesCompartidasCtrl.get_comercial_vigente(Lista.rows[0].fk_cliente);
+                            let comer = await funcionesCompartidasCtrl.get_comercial_vigente(Lista.rows[0].fk_cliente);
                             if(comer && comer.rows && comer.rows.length>0){
                                 info_comercial=comer.rows[0];
                             }
@@ -1717,7 +1717,7 @@ exports.orquestador = async (req, resp) => {
                                                         if(resultP.rows[i].email && resultP.rows[i].email.length>0){
 
                                                             let comercial=null;
-                                                            let comer = funcionesCompartidasCtrl.get_comercial_vigente(resultP.rows[i].fk_cliente);
+                                                            let comer = await funcionesCompartidasCtrl.get_comercial_vigente(resultP.rows[i].fk_cliente);
                                                             if(comer && comer.rows && comer.rows.length>0){
                                                                 comercial=comer.rows[0];
                                                             }
