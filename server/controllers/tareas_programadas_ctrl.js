@@ -198,7 +198,12 @@ exports.orquestador = async (req, resp) => {
                                 }
 
                                 if (monto > 0) {
-                                    enviar_documento_maximise(facturas, inv_date_aux, today_ano, today_mes, today_dia, monto, contador, i, detalles, flag_refactura);
+
+                                    if (flag_refactura && facturas.rows[0]['doc_code'] == 'P8') {
+                                        update_estado_factura('NO SE PUEDE REFACTURAR P8', facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
+                                    } else {
+                                        enviar_documento_maximise(facturas, inv_date_aux, today_ano, today_mes, today_dia, monto, contador, i, detalles, flag_refactura);
+                                    }
                                 }
                             }
                         }
