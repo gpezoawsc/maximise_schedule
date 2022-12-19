@@ -908,7 +908,7 @@ exports.orquestador = async (req, resp) => {
 
                         let Lista = await client.query(`
 
-                            SELECT pro.din, , cli.id as fk_cliente,
+                            SELECT pro.din, cli.id as fk_cliente,
                             d.contenedor,
                             c."dteEmail", com.email, 
                             concat(com.nombre, ' ', com.apellidos) as nombre,
