@@ -704,6 +704,17 @@ exports.orquestador = async (req, resp) => {
                     async function update_error_cargar_maximise(err, numero_unico, anomesdiahora, fk_nota_cobro, doc_code)
                     {
                         console.log(`ERROR CARGAR MAXIMISE`);
+                        console.log(` 
+                        UPDATE public.wsc_envio_facturas_cabeceras2 
+                        SET 
+                        estado='ERROR CARGAR MAXIMISE' 
+                        , log = concat(log,'\n','`+err+`')
+                        where 
+                        numero_unico=`+numero_unico+` 
+                        and 
+                        anomesdiahora=`+anomesdiahora+` 
+                        `);
+
                         await client.query(` 
                         UPDATE public.wsc_envio_facturas_cabeceras2 
                         SET 
@@ -1291,7 +1302,7 @@ exports.orquestador = async (req, resp) => {
                             xmltext_aux += `<UNIT_COST_AMT1>`+detalles.rows[0]['unit_cost_amt1']+`</UNIT_COST_AMT1>`;
                             xmltext_aux += `<SHIP_DATE>`+detalles.rows[0]['ship_date']+`</SHIP_DATE>`;
                             xmltext_aux += `<PROFIT_CODE>`+detalles.rows[0]['profit_code']+`</PROFIT_CODE>`;
-                            xmltext_aux += `<BRAN_CODE>`+detalles.rows[0]['brand_code']+`</BRAN_CODE>`;
+                            xmltext_aux += `<BRAN_CODE>1</BRAN_CODE>`;
                             xmltext_aux += `<UNIT_COMCOST_AMT>`+detalles.rows[0]['unit_comcost_amt']+`</UNIT_COMCOST_AMT>`;
                             xmltext_aux += `<UNIT_IFRSCOST_AMT>`+detalles.rows[0]['unit_ifrscost_amt']+`</UNIT_IFRSCOST_AMT>`;
                             xmltext_aux += `<REF_TEXT1>`+facturas.rows[0]['ref_text1']+`</REF_TEXT1>`;
@@ -1382,7 +1393,7 @@ exports.orquestador = async (req, resp) => {
                                 xmltext_aux += `<UNIT_COST_AMT1>`+detalles.rows[0]['unit_cost_amt1']+`</UNIT_COST_AMT1>`;
                                 xmltext_aux += `<SHIP_DATE>`+detalles.rows[0]['ship_date']+`</SHIP_DATE>`;
                                 xmltext_aux += `<PROFIT_CODE>`+detalles.rows[0]['profit_code']+`</PROFIT_CODE>`;
-                                xmltext_aux += `<BRAN_CODE>`+detalles.rows[0]['brand_code']+`</BRAN_CODE>`;
+                                xmltext_aux += `<BRAN_CODE>1</BRAN_CODE>`;
                                 xmltext_aux += `<UNIT_COMCOST_AMT>`+detalles.rows[0]['unit_comcost_amt']+`</UNIT_COMCOST_AMT>`;
                                 xmltext_aux += `<UNIT_IFRSCOST_AMT>`+detalles.rows[0]['unit_ifrscost_amt']+`</UNIT_IFRSCOST_AMT>`;
                                 xmltext_aux += `<REF_TEXT1>`+facturas.rows[0]['ref_text1']+`</REF_TEXT1>`;
@@ -1627,6 +1638,18 @@ exports.orquestador = async (req, resp) => {
                     async function update_error_cargar_maximise(err, numero_unico, anomesdiahora, fk_nota_cobro, doc_code)
                     {
                         console.log(`ERROR CARGAR MAXIMISE`);
+
+                        console.log(` 
+                        UPDATE public.wsc_envio_facturas_cabeceras2 
+                        SET 
+                        estado='ERROR CARGAR MAXIMISE' 
+                        , log = concat(log,'\n','`+err+`')
+                        where 
+                        numero_unico=`+numero_unico+` 
+                        and 
+                        anomesdiahora=`+anomesdiahora+` 
+                        `);
+
                         await client.query(` 
                         UPDATE public.wsc_envio_facturas_cabeceras2 
                         SET 
@@ -2472,10 +2495,14 @@ exports.orquestador = async (req, resp) => {
 
                     } else if(res.statusCode==200 ) {
 
-                        console.log("SUCCESS "); 
-                        console.log(JSON.stringify(res.body));
-                        if (fk_cabecera != -1) {
-                            actualizar_estado_bd('MAXIMISE', fk_cabecera)
+                        console.log("\n\nSUCCESS "); 
+                        console.log("\n\n"+JSON.stringify(res.body));
+                        var RespMax = JSON.stringify(res.body);
+                        var IdMax = RespMax.match(/<int xmlns=\"Maximise\">([^<]*)<\/int>/);
+                        console.log('\n\nId Maximise '+IdMax);
+                        if (fk_cabecera != -1) 
+                        {
+                            actualizar_estado_bd('MAXIMISE', fk_cabecera, IdMax)
                         }
                     } 
                 }
@@ -2483,13 +2510,14 @@ exports.orquestador = async (req, resp) => {
                                 
         }
 
-        async function actualizar_estado_bd(estado, fk_cabecera) {
+        async function actualizar_estado_bd(estado, fk_cabecera, IdMax) {
             
             var moment = require('moment');
             let fecha = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
 
             var query = '';
                 query+=`estado='`+estado+`', `;
+                query+=`id_maximise='`+IdMax+`', `;
                 query+=`"fk_updatedBy"=`+carpeta_data.rows[0]["fk_createdBy"]+`, `;
                 query+=`"updatedAt"='`+fecha+`'`;
 
@@ -3040,9 +3068,13 @@ exports.orquestador = async (req, resp) => {
 
                     } else if(res.statusCode==200 ) {
 
-                        console.log("SUCCESS "); 
-                        console.log(JSON.stringify(res.body));
-                        actualizar_estado_bd('MAXIMISE', fk_cabecera)
+                        console.log("\n\nSUCCESS "); 
+                        console.log("\n\n"+JSON.stringify(res.body));
+                        var RespMax = JSON.stringify(res.body);
+                        var IdMax = RespMax.match(/<int xmlns=\"Maximise\">([^<]*)<\/int>/);
+                        console.log('\n\nId Maximise '+IdMax);
+
+                        actualizar_estado_bd('MAXIMISE', fk_cabecera, IdMax)
                     } 
                 }
             });
@@ -3050,13 +3082,14 @@ exports.orquestador = async (req, resp) => {
                                 
         }
     
-        async function actualizar_estado_bd(estado, fk_cabecera) {
+        async function actualizar_estado_bd(estado, fk_cabecera, IdMax) {
             
             var moment = require('moment');
             let fecha = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
     
             var query = '';
                 query+=`estado='`+estado+`', `;
+                query+=`id_maximise='`+IdMax+`', `;
                 query+=`"fk_updatedBy"=`+carpeta_data.rows[0]["fk_createdBy"]+`, `;
                 query+=`"updatedAt"='`+fecha+`'`;
     
