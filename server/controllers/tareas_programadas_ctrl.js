@@ -11,8 +11,7 @@ const emailHandler = require('../../apis/emailHandler');
 const funcionesCompartidasCtrl = require('./funcionesCompartidasCtrl.js');
 
 
-
-exports.orquestador = async (req, resp) => {
+exports.orquestador_server_2 = async (req, resp) => {
     console.log("$.$");
     console.log("$.$");
     console.log("SCHEDULER MAXIMISE");
@@ -22,11 +21,1287 @@ exports.orquestador = async (req, resp) => {
         console.log('');
         console.log("CONSULTANDO COLA ");
         console.log("$$$");
-        orquestador();
+        orquestador_server_2();
 
     });
 
-    async function orquestador() { 
+    async function orquestador_server_2() { 
+        var tarea = await client.query(` SELECT * FROM public.queue_maximise WHERE estado='PENDIENTE' ORDER BY id ASC limit 1`);
+        console.log("$$$$$$");
+        if(tarea.rows.length > 0) {
+            console.log('TAREA ENCONTRADA: ENVIO DE ' + tarea.rows[0]['tarea']);
+
+            if (tarea.rows[0]['tarea'] == 'PAGOS') {
+                enviar_pago_maximise(tarea.rows[0])
+
+            } else if (tarea.rows[0]['tarea'] == 'PAGOS USD') {
+                enviar_pago_usd_maximise(tarea.rows[0])
+            }
+
+        } else {
+            console.log('NO HAY TAREAS PENDIENTES EN COLA');
+        }
+    }
+
+    async function enviar_pago_maximise(tarea) { 
+        console.log('Envio de pago')
+        client.query(` UPDATE public.queue_maximise SET estado='PROCESANDO' WHERE id=${tarea.id} `);
+
+        var carpeta_data = await client.query(` SELECT id, fk_responsable, errores, estado, cmpy_code, year_num, period_num, jour_code, entry_code, debit_amt, credit_amt, post_flag, com_text, cleared_flag, control_amt, debit_amt1, credit_amt1, debit_amt2, credit_amt2, debit_amt3, credit_amt3, tran_type_ind, ledger_code, fk_despacho, fk_nota_cobro, carpeta, codigo_cliente, monto, descripcion_movimiento, saldo, fecha_ingreso, fecha_registro, "fk_createdBy", "fk_updatedBy", "createdAt", "updatedAt", codigo_bi_pago, conversion, razon_social, 
+                                                    to_char(entry_date, 'DD-MM-YYYY') as entry_date, 
+                                                    to_char(jour_date, 'DD-MM-YYYY') as jour_date, 
+                                                    to_char(fecha_movimiento, 'DD-MM-YYYY') as fecha_movimiento
+                                                    FROM public.wsc_envio_asientos_cabeceras 
+                                                where id=${tarea['fk_cabecera']}`);
+
+        if(carpeta_data.rows.length>0) {
+
+            let cmpy_code = carpeta_data.rows[0].cmpy_code;
+            let year_num = carpeta_data.rows[0].year_num;
+            let period_num = carpeta_data.rows[0].period_num;
+            let jour_code = carpeta_data.rows[0].jour_code;
+            let entry_code = carpeta_data.rows[0].entry_code;
+            let entry_date = carpeta_data.rows[0].entry_date;
+            let jour_date = carpeta_data.rows[0].jour_date;
+            let debit_amt = carpeta_data.rows[0].debit_amt;
+            let credit_amt = carpeta_data.rows[0].credit_amt;
+            let post_flag = carpeta_data.rows[0].post_flag;
+            let com_text = carpeta_data.rows[0].com_text;
+            let cleared_flag = carpeta_data.rows[0].cleared_flag;
+            let control_amt = carpeta_data.rows[0].control_amt;
+            let debit_amt1 = carpeta_data.rows[0].debit_amt1;
+            let credit_amt1 = carpeta_data.rows[0].credit_amt1;
+            let debit_amt2 = carpeta_data.rows[0].debit_amt2;
+            let credit_amt2 = carpeta_data.rows[0].credit_amt2;
+            let tran_type_ind = carpeta_data.rows[0].tran_type_ind;
+            let ledger_code = carpeta_data.rows[0].ledger_code;
+            let debit_amt3 = carpeta_data.rows[0].debit_amt3;
+            let credit_amt3 = carpeta_data.rows[0].credit_amt3;
+            let razon_social = carpeta_data.rows[0].razon_social;
+
+            let carpeta = carpeta_data.rows[0].carpeta;
+            let monto = carpeta_data.rows[0].monto;
+            let codigo_cliente = carpeta_data.rows[0].codigo_cliente;
+            let fecha_movimiento = carpeta_data.rows[0].fecha_movimiento;
+
+            var xmltext_aux = `<string xmlns="Maximise"><BATCH><HEAD>`;
+            xmltext_aux += `<CMPY_CODE>`+ cmpy_code +`</CMPY_CODE>`;
+            xmltext_aux += `<YEAR_NUM>`+ year_num +`</YEAR_NUM>`;
+            xmltext_aux += `<PERIOD_NUM>`+ period_num +`</PERIOD_NUM>`;
+            xmltext_aux += `<JOUR_CODE>`+ jour_code +`</JOUR_CODE>`;
+            xmltext_aux += `<ENTRY_CODE>`+ entry_code +`</ENTRY_CODE>`;
+            xmltext_aux += `<ENTRY_DATE>`+ entry_date +`</ENTRY_DATE>`;
+            xmltext_aux += `<JOUR_DATE>`+ jour_date +`</JOUR_DATE>`;
+            xmltext_aux += `<DEBIT_AMT>`+ debit_amt +`</DEBIT_AMT>`;
+            xmltext_aux += `<CREDIT_AMT>`+ credit_amt +`</CREDIT_AMT>`;
+            xmltext_aux += `<POST_FLAG>`+ post_flag +`</POST_FLAG>`;
+            xmltext_aux += `<COM_TEXT>`+ com_text + tarea['fk_cabecera'] +`</COM_TEXT>`;
+            xmltext_aux += `<CLEARED_FLAG>`+ cleared_flag +`</CLEARED_FLAG>`;
+            xmltext_aux += `<CONTROL_AMT>`+ control_amt +`</CONTROL_AMT>`;
+            xmltext_aux += `<DEBIT_AMT1>`+ debit_amt1 +`</DEBIT_AMT1>`;
+            xmltext_aux += `<CREDIT_AMT1>`+ credit_amt1 +`</CREDIT_AMT1>`;
+            xmltext_aux += `<DEBIT_AMT2>`+ debit_amt2 +`</DEBIT_AMT2>`;
+            xmltext_aux += `<CREDIT_AMT2>`+ credit_amt2 +`</CREDIT_AMT2>`;
+            xmltext_aux += `<TRAN_TYPE_IND>`+ tran_type_ind +`</TRAN_TYPE_IND>`;
+            xmltext_aux += `<LEDGER_CODE>`+ ledger_code +`</LEDGER_CODE>`;
+            xmltext_aux += `<DEBIT_AMT3>`+ debit_amt3 +`</DEBIT_AMT3>`;
+            xmltext_aux += `<CREDIT_AMT3>`+ credit_amt3 +`</CREDIT_AMT3>`;
+            xmltext_aux += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
+            xmltext_aux += `</HEAD>`;
+
+            let pago = {
+                n_carpeta: carpeta,
+                monto: monto,
+                cliente: codigo_cliente,
+                fecha: fecha_movimiento
+            }
+
+            consultar_carpeta_maximise(tarea['fk_cabecera'], pago, xmltext_aux, razon_social);
+        
+        }            
+
+        async function consultar_carpeta_maximise(fk_cabecera, pago, xmltext_aux, razon_social) {
+
+            const request = require('request');
+            const fs = require("fs");
+
+            var xml_cws = xmltext_aux.split('CMPY_CODE')[0] + 'CMPY_CODE>03</CMPY_CODE' + xmltext_aux.split('CMPY_CODE')[2];
+
+            const xmltext = `SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num, 
+                            (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND (CMPY_CODE='02' OR CMPY_CODE='03' OR CMPY_CODE='04')) as total_credito,
+                            (SELECT SUM(TOTAL_AMT) - SUM(PAID_AMT) FROM invoicehead WHERE cmpy_code='03' AND ref_text1='${pago.n_carpeta}' AND ref_text2='PALLET' AND POSTED_FLAG<>'V') as pallet,
+                            (SELECT SUM(TOTAL_AMT) - SUM(PAID_AMT) FROM invoicehead WHERE cmpy_code='03' AND ref_text1='${pago.n_carpeta}' AND ref_text2='TVP' AND POSTED_FLAG<>'V') as tvp,
+                            (SELECT SUM(TOTAL_AMT) - SUM(PAID_AMT) FROM invoicehead WHERE cmpy_code='03' AND ref_text1='${pago.n_carpeta}' AND ref_text2='OTROS' AND POSTED_FLAG<>'V') as otros
+                            FROM invoicehead ih
+                            WHERE ih.cmpy_code='04' and 
+                            ih.POSTED_FLAG<>'V' and 
+                            ih.ref_text1='${pago.n_carpeta}' 
+                            ORDER BY ih.doc_code asc;`;
+
+            const data = {
+                AliasName: 'dwi_tnm',
+                UserName: 'webservice',
+                Password: 'webservice001',
+                Sql: xmltext
+            };
+
+            const options = {
+                url: 'http://asp3.maximise.cl/wsv/query.asmx/GetQueryAsDataSet',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/html',
+                    'Content-Length': data.length
+                },
+                json: true,
+                form: {
+                    AliasName: 'dwi_tnm',
+                    UserName: 'webservice',
+                    Password: 'webservice001',
+                    Sql: xmltext
+                }
+            };
+
+            try {
+
+                request.post(options, async(err, res, body) => {
+
+                    if(err) 
+                    { 
+                        console.log('ERROR ' + pago.n_carpeta + ', ' + err);
+                    }
+                    else if(body) 
+                    {   
+                        if(res.statusCode!=200){
+
+                            console.log('ERROR ' + pago.n_carpeta + ', ' + JSON.stringify(res.body));
+
+                        }
+                        else if(res.statusCode==200 )
+                        {
+                            var documentos = [];
+                            var payment = Number(pago.monto);
+
+                            var entries = JSON.stringify(body).split('<Table');
+
+                            let resp_cust_code = '';
+                            let nota_debito = 0;
+
+                            //GUARDO DOCUMENTOS EN ARRAY DE OBJETOS
+                            for(var j=1; j<entries.length; j++) {
+                                let resp_inv_num = entries[j].split('<INV_NUM>').pop().split('</INV_NUM>')[0];
+                                let resp_doc_code = entries[j].split('<doc_code>').pop().split('</doc_code>')[0];
+                                resp_cust_code = entries[j].split('<cust_code>').pop().split('</cust_code>')[0];
+                                let resp_paid_amt = entries[j].split('<PAID_AMT>').pop().split('</PAID_AMT>')[0];
+                                let resp_total_amt = entries[j].split('<TOTAL_AMT>').pop().split('</TOTAL_AMT>')[0];
+                                let resp_ref_text1 = entries[j].split('<REF_TEXT1>').pop().split('</REF_TEXT1>')[0];
+                                let resp_ref_text2 = entries[j].split('<REF_TEXT2>').pop().split('</REF_TEXT2>')[0];
+                                let resp_ext_num = entries[j].split('<ext_num>').pop().split('</ext_num>')[0];
+                                let resp_total_credito = entries[j].split('<total_credito>').pop().split('</total_credito>')[0];
+                                let resp_cred_num = entries[j].split('<cred_num>').pop().split('</cred_num>')[0];
+                                let resp_pallet = entries[j].split('<pallet>').pop().split('</pallet>')[0];
+                                let resp_tvp = entries[j].split('<tvp>').pop().split('</tvp>')[0];
+                                let resp_otros = entries[j].split('<otros>').pop().split('</otros>')[0];
+
+                                let resp_por_pagar = Number(resp_total_amt) - Number(resp_paid_amt);
+
+                                try {
+                                    if (Number(resp_total_credito) > 0) {
+                                        resp_por_pagar -= Number(resp_total_credito)
+                                    }
+                                } catch {
+
+                                }
+
+                                if (resp_doc_code == 'F8') {
+                                    resp_por_pagar += nota_debito;
+                                }
+
+                                if (resp_doc_code == 'D1'){
+                                    nota_debito = Number(resp_total_amt)
+
+                                //} else if (resp_doc_code != 'P8' && resp_por_pagar > 10) {
+                                } else if (resp_por_pagar > 10) {
+                                    documentos.push({
+                                        resp_inv_num: resp_inv_num,
+                                        resp_doc_code: resp_doc_code,
+                                        resp_paid_amt: resp_paid_amt,
+                                        resp_total_amt: resp_total_amt,
+                                        resp_por_pagar: resp_por_pagar,
+                                        resp_ref_text1: resp_ref_text1,
+                                        resp_ref_text2: resp_ref_text2,
+                                        resp_ext_num: resp_ext_num
+                                    })
+                                }
+
+                                if (j+1 == entries.length) {
+                                    if (! isNaN(resp_pallet) ) {
+                                        documentos.push({
+                                            resp_inv_num: resp_inv_num,
+                                            resp_doc_code: 'PALLET',
+                                            resp_por_pagar: Number(resp_pallet),
+                                        })
+                                    }
+                                    if (! isNaN(resp_tvp) ) {
+                                        documentos.push({
+                                            resp_inv_num: resp_inv_num,
+                                            resp_doc_code: 'TVP',
+                                            resp_por_pagar: Number(resp_tvp),
+                                        })
+                                    }
+                                    if (! isNaN(resp_otros) ) {
+                                        documentos.push({
+                                            resp_inv_num: resp_inv_num,
+                                            resp_doc_code: 'OTROS',
+                                            resp_por_pagar: Number(resp_otros),
+                                        })
+                                    }
+                                }
+
+                            }
+
+                            if (documentos.length == 0) {
+                                //DINERO SE IRA A EXCEDENTE, PERO HAY CAMPOS QUE DEBO CONSULTAR DESDE OTRA FUENTE
+                                resp_cust_code = await get_cliente_rut(pago.cliente.split(' ')[0]);
+                                if (resp_cust_code == false) {
+                                    return false;
+                                }
+                            }
+
+                            // BANCO BANCO BANCO BANCO BANCO BANCO BANCO BANCO BANCO
+
+                            var auto_num = 1;
+
+                            let bco_fk_cabecera = fk_cabecera;
+                            let bco_seq_num = auto_num;
+                            let bco_analysis_text = '';
+                            let bco_tran_date = pago.fecha;
+                            let bco_ref_text = resp_cust_code;
+                            let bco_ref_num = 0;
+                            let bco_debit_amt = payment;
+                            let bco_credit_amt = 0;
+                            let bco_debit_amt1 = 0;
+                            let bco_credit_amt1 = 0;
+                            let bco_debit_amt2 = 0;
+                            let bco_credit_amt2 = 0;
+                            let bco_debit_amt3 = 0;
+                            let bco_credit_amt3 = 0;
+                            let bco_ref_text1 = pago.n_carpeta;
+                            let bco_bran_code = '';
+                            let bco_profit_code = '';
+                            let bco_currency_code = 'CLP';
+                            let bco_rate_exchange = 1;
+
+                            let bco_acct_code = '11103001-000';
+                            let bco_ref_text2 = resp_cust_code;
+                            let bco_desc_text = 'BANCO SANTANDER';
+
+                            columna = '';                           valor = '';
+                            columna+=`"fk_cabecera",`;              valor+=`'`+ bco_fk_cabecera +`',`;
+                            columna+=`"seq_num",`;                  valor+=`'`+ bco_seq_num +`',`;
+                            columna+=`"analysis_text",`;            valor+=`'`+ bco_analysis_text +`',`;
+                            columna+=`"tran_date",`;                valor+=`'`+ bco_tran_date +`',`;
+                            columna+=`"ref_text",`;                 valor+=`'`+ bco_ref_text +`',`;
+                            columna+=`"ref_num",`;                  valor+=`'`+ bco_ref_num +`',`;
+                            columna+=`"debit_amt",`;                valor+=`'`+ bco_debit_amt +`',`;
+                            columna+=`"credit_amt",`;               valor+=`'`+ bco_credit_amt +`',`;
+                            columna+=`"debit_amt1",`;               valor+=`'`+ bco_debit_amt1 +`',`;
+                            columna+=`"credit_amt1",`;              valor+=`'`+ bco_credit_amt1 +`',`;
+                            columna+=`"debit_amt2",`;               valor+=`'`+ bco_debit_amt2 +`',`;
+                            columna+=`"credit_amt2",`;              valor+=`'`+ bco_credit_amt2 +`',`;
+                            columna+=`"debit_amt3",`;               valor+=`'`+ bco_debit_amt3 +`',`;
+                            columna+=`"credit_amt3",`;              valor+=`'`+ bco_credit_amt3 +`',`;
+                            columna+=`"ref_text1",`;                valor+=`'`+ bco_ref_text1 +`',`;
+                            columna+=`"bran_code",`;                valor+=`'`+ bco_bran_code +`',`;
+                            columna+=`"profit_code",`;              valor+=`'`+ bco_profit_code +`',`;
+                            columna+=`"currency_code",`;            valor+=`'`+ bco_currency_code +`',`;
+                            columna+=`"rate_exchange",`;            valor+=`'`+ bco_rate_exchange +`',`;
+                            columna+=`"acct_code",`;                valor+=`'`+ bco_acct_code +`',`;
+                            columna+=`"ref_text2",`;                valor+=`'`+ bco_ref_text2 +`',`;
+                            columna+=`"desc_text"`;                 valor+=`'`+ bco_desc_text +`'`;
+
+                            save_detalle(columna, valor);
+                            /** XML DETALLE BANCO  **/
+                            xmltext_aux += `<DETAIL>`;
+                            xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
+                            xmltext_aux += `<SEQ_NUM>`+ bco_seq_num +`</SEQ_NUM>`;
+                            xmltext_aux += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
+                            xmltext_aux += `<ANALYSIS_TEXT>`+ bco_analysis_text +`</ANALYSIS_TEXT>`;
+                            xmltext_aux += `<TRAN_DATE>`+ bco_tran_date +`</TRAN_DATE>`;
+                            xmltext_aux += `<REF_TEXT>`+ bco_ref_text +`</REF_TEXT>`;
+                            xmltext_aux += `<REF_NUM>`+ bco_ref_num +`</REF_NUM>`;
+                            xmltext_aux += `<ACCT_CODE>`+ bco_acct_code +`</ACCT_CODE>`;
+                            xmltext_aux += `<DEBIT_AMT>`+ bco_debit_amt +`</DEBIT_AMT>`;
+                            xmltext_aux += `<CREDIT_AMT>`+ bco_credit_amt +`</CREDIT_AMT>`;
+                            xmltext_aux += `<DEBIT_AMT1>`+ bco_debit_amt1 +`</DEBIT_AMT1>`;
+                            xmltext_aux += `<CREDIT_AMT1>`+ bco_credit_amt1 +`</CREDIT_AMT1>`;
+                            xmltext_aux += `<DEBIT_AMT2>`+ bco_debit_amt2 +`</DEBIT_AMT2>`;
+                            xmltext_aux += `<CREDIT_AMT2>`+ bco_credit_amt2 +`</CREDIT_AMT2>`;
+                            xmltext_aux += `<REF_TEXT1>`+ bco_ref_text1 +`</REF_TEXT1>`;
+                            xmltext_aux += `<REF_TEXT2>`+ bco_ref_text2 +`</REF_TEXT2>`;
+                            xmltext_aux += `<DESC_TEXT>`+ bco_desc_text.replace('&', 'y').replace('&', 'y') +`</DESC_TEXT>`;
+                            xmltext_aux += `<BRAN_CODE>`+ bco_bran_code +`</BRAN_CODE>`;
+                            xmltext_aux += `<PROFIT_CODE>`+ bco_profit_code +`</PROFIT_CODE>`;
+                            xmltext_aux += `<CURRENCY_CODE>`+ bco_currency_code +`</CURRENCY_CODE>`;
+                            xmltext_aux += `<RATE_EXCHANGE>`+ bco_rate_exchange +`</RATE_EXCHANGE>`;
+                            xmltext_aux += `<DEBIT_AMT3>`+ bco_debit_amt3 +`</DEBIT_AMT3>`;
+                            xmltext_aux += `<CREDIT_AMT3>`+ bco_credit_amt3 +`</CREDIT_AMT3>`;
+
+                            xmltext_aux += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
+
+                            xmltext_aux += `</DETAIL>`;
+
+                            auto_num++;
+                            // DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO
+                            for (let i=0; i<documentos.length; i++) {
+
+                                var curr_pay = 0;
+                                if(payment - documentos[i].resp_por_pagar >= 0) {
+                                    curr_pay = documentos[i].resp_por_pagar;
+                                    payment -= documentos[i].resp_por_pagar;
+                                } else {
+                                    curr_pay = payment;
+                                    payment = 0;
+                                }
+
+                                let doc_fk_cabecera = fk_cabecera;
+                                let doc_seq_num = auto_num;
+                                let doc_analysis_text = resp_cust_code;
+                                let doc_tran_date = pago.fecha;
+                                let doc_ref_text = resp_cust_code;
+                                let doc_ref_num = (documentos[i].resp_inv_num==''||documentos[i].resp_inv_num==null||documentos[i].resp_inv_num==undefined)?0:documentos[i].resp_inv_num;
+                                let doc_debit_amt = 0;
+                                let doc_credit_amt = curr_pay;
+                                let doc_debit_amt1 = 0;
+                                let doc_credit_amt1 = 0;
+                                let doc_debit_amt2 = 0;
+                                let doc_credit_amt2 = 0;
+                                let doc_debit_amt3 = 0;
+                                let doc_credit_amt3 = 0;
+                                let doc_ref_text1 = pago.n_carpeta;
+                                let doc_bran_code = '1';
+                                let doc_profit_code = 'CM';
+                                let doc_currency_code = 'CLP';
+                                let doc_rate_exchange = 1;
+                                let doc_desc_text = razon_social;
+
+                                let doc_acct_code = '11301001-001';
+                                let doc_ref_text2 = 'PAGO DIN WSC';
+
+                                if (documentos[i].resp_doc_code != 'DI') {
+                                    doc_acct_code = '11301001-000';
+                                    doc_ref_text2 = 'PAGO FACT';
+                                } 
+
+                                if (documentos[i].resp_doc_code == 'PALLET' || documentos[i].resp_doc_code == 'TVP' || documentos[i].resp_doc_code == 'OTROS') {
+                                    doc_acct_code = '21501002-000';
+                                    doc_ref_text2 = documentos[i].resp_doc_code;
+                                    crear_pago_wsc_cws(xml_cws, pago, resp_cust_code, curr_pay, documentos[i].resp_doc_code);
+                                }
+
+                                columna = '';                           valor = '';
+                                columna+=`"fk_cabecera",`;              valor+=`'`+ doc_fk_cabecera +`',`;
+                                columna+=`"seq_num",`;                  valor+=`'`+ doc_seq_num +`',`;
+                                columna+=`"analysis_text",`;            valor+=`'`+ doc_analysis_text +`',`;
+                                columna+=`"tran_date",`;                valor+=`'`+ doc_tran_date +`',`;
+                                columna+=`"ref_text",`;                 valor+=`'`+ doc_ref_text +`',`;
+                                columna+=`"ref_num",`;                  valor+=`'`+ doc_ref_num +`',`;
+                                columna+=`"debit_amt",`;                valor+=`'`+ doc_debit_amt +`',`;
+                                columna+=`"credit_amt",`;               valor+=`'`+ doc_credit_amt +`',`;
+                                columna+=`"debit_amt1",`;               valor+=`'`+ doc_debit_amt1 +`',`;
+                                columna+=`"credit_amt1",`;              valor+=`'`+ doc_credit_amt1 +`',`;
+                                columna+=`"debit_amt2",`;               valor+=`'`+ doc_debit_amt2 +`',`;
+                                columna+=`"credit_amt2",`;              valor+=`'`+ doc_credit_amt2 +`',`;
+                                columna+=`"debit_amt3",`;               valor+=`'`+ doc_debit_amt3 +`',`;
+                                columna+=`"credit_amt3",`;              valor+=`'`+ doc_credit_amt3 +`',`;
+                                columna+=`"ref_text1",`;                valor+=`'`+ doc_ref_text1 +`',`;
+                                columna+=`"bran_code",`;                valor+=`'`+ doc_bran_code +`',`;
+                                columna+=`"profit_code",`;              valor+=`'`+ doc_profit_code +`',`;
+                                columna+=`"currency_code",`;            valor+=`'`+ doc_currency_code +`',`;
+                                columna+=`"rate_exchange",`;            valor+=`'`+ doc_rate_exchange +`',`;
+                                columna+=`"acct_code",`;                valor+=`'`+ doc_acct_code +`',`;
+                                columna+=`"ref_text2",`;                valor+=`'`+ doc_ref_text2 +`',`;
+                                columna+=`"desc_text"`;                 valor+=`'`+ doc_desc_text +`'`;
+
+                                save_detalle(columna, valor);
+                                /** XML DETALLE DOCUMENTO **/
+                                xmltext_aux += `<DETAIL>`;
+                                xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
+                                xmltext_aux += `<SEQ_NUM>`+ doc_seq_num +`</SEQ_NUM>`;
+                                xmltext_aux += `<TRAN_TYPE_IND>`+ 'CPA' +`</TRAN_TYPE_IND>`;
+                                xmltext_aux += `<ANALYSIS_TEXT>`+ doc_analysis_text +`</ANALYSIS_TEXT>`;
+                                xmltext_aux += `<TRAN_DATE>`+ doc_tran_date +`</TRAN_DATE>`;
+                                xmltext_aux += `<REF_TEXT>`+ doc_ref_text +`</REF_TEXT>`;
+                                xmltext_aux += `<REF_NUM>`+ doc_ref_num +`</REF_NUM>`;
+                                xmltext_aux += `<ACCT_CODE>`+ doc_acct_code +`</ACCT_CODE>`;
+                                xmltext_aux += `<DEBIT_AMT>`+ doc_debit_amt +`</DEBIT_AMT>`;
+                                xmltext_aux += `<CREDIT_AMT>`+ doc_credit_amt +`</CREDIT_AMT>`;
+                                xmltext_aux += `<DEBIT_AMT1>`+ doc_debit_amt1 +`</DEBIT_AMT1>`;
+                                xmltext_aux += `<CREDIT_AMT1>`+ doc_credit_amt1 +`</CREDIT_AMT1>`;
+                                xmltext_aux += `<DEBIT_AMT2>`+ doc_debit_amt2 +`</DEBIT_AMT2>`;
+                                xmltext_aux += `<CREDIT_AMT2>`+ doc_credit_amt2 +`</CREDIT_AMT2>`;
+                                xmltext_aux += `<REF_TEXT1>`+ doc_ref_text1 +`</REF_TEXT1>`;
+                                xmltext_aux += `<REF_TEXT2>`+ doc_ref_text2 +`</REF_TEXT2>`;
+                                xmltext_aux += `<DESC_TEXT>`+ doc_desc_text.replace('&', 'y').replace('&', 'y') +`</DESC_TEXT>`;
+                                xmltext_aux += `<BRAN_CODE>`+ doc_bran_code +`</BRAN_CODE>`;
+                                xmltext_aux += `<PROFIT_CODE>`+ doc_profit_code +`</PROFIT_CODE>`;
+                                xmltext_aux += `<CURRENCY_CODE>`+ doc_currency_code +`</CURRENCY_CODE>`;
+                                xmltext_aux += `<RATE_EXCHANGE>`+ doc_rate_exchange +`</RATE_EXCHANGE>`;
+                                xmltext_aux += `<DEBIT_AMT3>`+ doc_debit_amt3 +`</DEBIT_AMT3>`;
+                                xmltext_aux += `<CREDIT_AMT3>`+ doc_credit_amt3 +`</CREDIT_AMT3>`;
+                                xmltext_aux += `<REF_AMT>`+ doc_credit_amt +`</REF_AMT>`;
+
+                                xmltext_aux += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
+
+                                xmltext_aux += `</DETAIL>`;
+
+                                if (payment == 0) {
+                                    break;
+                                }
+                                auto_num++;
+                            }
+
+                            if (payment > 0) {//SOBRO DINERO, SE AGREGA A AJUSTE
+
+                                let aju_fk_cabecera = fk_cabecera;
+                                let aju_seq_num = auto_num;
+                                let aju_analysis_text = resp_cust_code;
+                                let aju_tran_date = pago.fecha;
+                                let aju_ref_text = resp_cust_code;
+                                let aju_ref_num = 0;
+                                let aju_debit_amt = 0;
+                                let aju_credit_amt = payment;
+                                let aju_debit_amt1 = 0;
+                                let aju_credit_amt1 = 0;
+                                let aju_debit_amt2 = 0;
+                                let aju_credit_amt2 = 0;
+                                let aju_debit_amt3 = 0;
+                                let aju_credit_amt3 = 0;
+                                let aju_ref_text1 = pago.n_carpeta;
+                                let aju_bran_code = '';
+                                let aju_profit_code = '';
+                                let aju_currency_code = 'CLP';
+                                let aju_rate_exchange = 1;
+        
+                                let aju_acct_code = '21102001-000';
+                                let aju_ref_text2 = 'EXCEDENTE CLIENTE';
+                                let aju_desc_text = razon_social;
+        
+                                columna = '';                           valor = '';
+                                columna+=`"fk_cabecera",`;              valor+=`'`+ aju_fk_cabecera +`',`;
+                                columna+=`"seq_num",`;                  valor+=`'`+ aju_seq_num +`',`;
+                                columna+=`"analysis_text",`;            valor+=`'`+ aju_analysis_text +`',`;
+                                columna+=`"tran_date",`;                valor+=`'`+ aju_tran_date +`',`;
+                                columna+=`"ref_text",`;                 valor+=`'`+ aju_ref_text +`',`;
+                                columna+=`"ref_num",`;                  valor+=`'`+ aju_ref_num +`',`;
+                                columna+=`"debit_amt",`;                valor+=`'`+ aju_debit_amt +`',`;
+                                columna+=`"credit_amt",`;               valor+=`'`+ aju_credit_amt +`',`;
+                                columna+=`"debit_amt1",`;               valor+=`'`+ aju_debit_amt1 +`',`;
+                                columna+=`"credit_amt1",`;              valor+=`'`+ aju_credit_amt1 +`',`;
+                                columna+=`"debit_amt2",`;               valor+=`'`+ aju_debit_amt2 +`',`;
+                                columna+=`"credit_amt2",`;              valor+=`'`+ aju_credit_amt2 +`',`;
+                                columna+=`"debit_amt3",`;               valor+=`'`+ aju_debit_amt3 +`',`;
+                                columna+=`"credit_amt3",`;              valor+=`'`+ aju_credit_amt3 +`',`;
+                                columna+=`"ref_text1",`;                valor+=`'`+ aju_ref_text1 +`',`;
+                                columna+=`"bran_code",`;                valor+=`'`+ aju_bran_code +`',`;
+                                columna+=`"profit_code",`;              valor+=`'`+ aju_profit_code +`',`;
+                                columna+=`"currency_code",`;            valor+=`'`+ aju_currency_code +`',`;
+                                columna+=`"rate_exchange",`;            valor+=`'`+ aju_rate_exchange +`',`;
+                                columna+=`"acct_code",`;                valor+=`'`+ aju_acct_code +`',`;
+                                columna+=`"ref_text2",`;                valor+=`'`+ aju_ref_text2 +`',`;
+                                columna+=`"desc_text"`;                 valor+=`'`+ aju_desc_text +`'`;
+        
+                                save_detalle(columna, valor);
+                                /** XML DETALLE BANCO  **/
+                                xmltext_aux += `<DETAIL>`;
+                                xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
+                                xmltext_aux += `<SEQ_NUM>`+ aju_seq_num +`</SEQ_NUM>`;
+                                xmltext_aux += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
+                                xmltext_aux += `<ANALYSIS_TEXT>`+ aju_analysis_text +`</ANALYSIS_TEXT>`;
+                                xmltext_aux += `<TRAN_DATE>`+ aju_tran_date +`</TRAN_DATE>`;
+                                xmltext_aux += `<REF_TEXT>`+ aju_ref_text +`</REF_TEXT>`;
+                                xmltext_aux += `<REF_NUM>`+ aju_ref_num +`</REF_NUM>`;
+                                xmltext_aux += `<ACCT_CODE>`+ aju_acct_code +`</ACCT_CODE>`;
+                                xmltext_aux += `<DEBIT_AMT>`+ aju_debit_amt +`</DEBIT_AMT>`;
+                                xmltext_aux += `<CREDIT_AMT>`+ aju_credit_amt +`</CREDIT_AMT>`;
+                                xmltext_aux += `<DEBIT_AMT1>`+ aju_debit_amt1 +`</DEBIT_AMT1>`;
+                                xmltext_aux += `<CREDIT_AMT1>`+ aju_credit_amt1 +`</CREDIT_AMT1>`;
+                                xmltext_aux += `<DEBIT_AMT2>`+ aju_debit_amt2 +`</DEBIT_AMT2>`;
+                                xmltext_aux += `<CREDIT_AMT2>`+ aju_credit_amt2 +`</CREDIT_AMT2>`;
+                                xmltext_aux += `<REF_TEXT1>`+ aju_ref_text1 +`</REF_TEXT1>`;
+                                xmltext_aux += `<REF_TEXT2>`+ aju_ref_text2 +`</REF_TEXT2>`;
+                                xmltext_aux += `<DESC_TEXT>`+ aju_desc_text.replace('&', 'y').replace('&', 'y') +`</DESC_TEXT>`;
+                                xmltext_aux += `<BRAN_CODE>`+ aju_bran_code +`</BRAN_CODE>`;
+                                xmltext_aux += `<PROFIT_CODE>`+ aju_profit_code +`</PROFIT_CODE>`;
+                                xmltext_aux += `<CURRENCY_CODE>`+ aju_currency_code +`</CURRENCY_CODE>`;
+                                xmltext_aux += `<RATE_EXCHANGE>`+ aju_rate_exchange +`</RATE_EXCHANGE>`;
+                                xmltext_aux += `<DEBIT_AMT3>`+ aju_debit_amt3 +`</DEBIT_AMT3>`;
+                                xmltext_aux += `<CREDIT_AMT3>`+ aju_credit_amt3 +`</CREDIT_AMT3>`;
+
+                                xmltext_aux += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
+
+                                xmltext_aux += `</DETAIL>`;
+                            }
+
+                            xmltext_aux +=`</BATCH></string>`;
+                            send_pago_maximise(xmltext_aux, fk_cabecera)
+
+                        }
+                    }
+                });
+            } catch (error) {
+                console.log("ERROR "+error);
+
+            }
+        }
+
+        async function get_cliente_rut(fk_cliente) {
+                    
+            var rut_cliente = await client.query(`SELECT rut FROM public.clientes WHERE id='${fk_cliente}'`); 
+            if (rut_cliente.rows.length > 0) {
+                return rut_cliente.rows[0]['rut'].replace('.', '').replace('.', '');
+            } else {
+                return false
+            }
+                                
+        }
+
+        async function save_detalle(columna, valor) {
+            
+            console.log(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
+            var insert = await client.query(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
+                                
+        }
+
+        async function crear_pago_wsc_cws(xmlBase, pago, cust_code, monto, concepto) {
+            
+            //          DEBE
+            xmlBase += `<DETAIL>`;
+            xmlBase += `<CMPY_CODE>`+ '03' +`</CMPY_CODE>`;
+            xmlBase += `<SEQ_NUM>`+ 1 +`</SEQ_NUM>`;
+            xmlBase += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
+            xmlBase += `<ANALYSIS_TEXT>`+ '' +`</ANALYSIS_TEXT>`;
+            xmlBase += `<TRAN_DATE>`+ pago.fecha +`</TRAN_DATE>`;
+            xmlBase += `<REF_TEXT>`+ cust_code +`</REF_TEXT>`;
+            xmlBase += `<REF_NUM>`+ 0 +`</REF_NUM>`;
+            xmlBase += `<ACCT_CODE>`+ '11301004-000' +`</ACCT_CODE>`;
+            xmlBase += `<DEBIT_AMT>`+ monto +`</DEBIT_AMT>`;
+            xmlBase += `<CREDIT_AMT>`+ 0 +`</CREDIT_AMT>`;
+            xmlBase += `<DEBIT_AMT1>`+ 0 +`</DEBIT_AMT1>`;
+            xmlBase += `<CREDIT_AMT1>`+ 0 +`</CREDIT_AMT1>`;
+            xmlBase += `<DEBIT_AMT2>`+ 0 +`</DEBIT_AMT2>`;
+            xmlBase += `<CREDIT_AMT2>`+ 0 +`</CREDIT_AMT2>`;
+            xmlBase += `<REF_TEXT1>`+ pago.n_carpeta +`</REF_TEXT1>`;
+            xmlBase += `<REF_TEXT2>`+ cust_code +`</REF_TEXT2>`;
+            xmlBase += `<DESC_TEXT>`+ 'CUENTA CORRIENTE WSCARGO' +`</DESC_TEXT>`;
+            xmlBase += `<BRAN_CODE>`+ '' +`</BRAN_CODE>`;
+            xmlBase += `<PROFIT_CODE>`+ '' +`</PROFIT_CODE>`;
+            xmlBase += `<CURRENCY_CODE>`+ 'CLP' +`</CURRENCY_CODE>`;
+            xmlBase += `<RATE_EXCHANGE>`+ 1 +`</RATE_EXCHANGE>`;
+            xmlBase += `<DEBIT_AMT3>`+ 0 +`</DEBIT_AMT3>`;
+            xmlBase += `<CREDIT_AMT3>`+ 0 +`</CREDIT_AMT3>`;
+            xmlBase += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
+            xmlBase += `</DETAIL>`;
+
+            //          HABER
+            xmlBase += `<DETAIL>`;
+            xmlBase += `<CMPY_CODE>`+ '03' +`</CMPY_CODE>`;
+            xmlBase += `<SEQ_NUM>`+ 1 +`</SEQ_NUM>`;
+            xmlBase += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
+            xmlBase += `<ANALYSIS_TEXT>`+ '' +`</ANALYSIS_TEXT>`;
+            xmlBase += `<TRAN_DATE>`+ pago.fecha +`</TRAN_DATE>`;
+            xmlBase += `<REF_TEXT>`+ cust_code +`</REF_TEXT>`;
+            xmlBase += `<REF_NUM>`+ 0 +`</REF_NUM>`;
+            xmlBase += `<ACCT_CODE>`+ '11301001-000' +`</ACCT_CODE>`;
+            xmlBase += `<DEBIT_AMT>`+ 0 +`</DEBIT_AMT>`;
+            xmlBase += `<CREDIT_AMT>`+ monto +`</CREDIT_AMT>`;
+            xmlBase += `<DEBIT_AMT1>`+ 0 +`</DEBIT_AMT1>`;
+            xmlBase += `<CREDIT_AMT1>`+ 0 +`</CREDIT_AMT1>`;
+            xmlBase += `<DEBIT_AMT2>`+ 0 +`</DEBIT_AMT2>`;
+            xmlBase += `<CREDIT_AMT2>`+ 0 +`</CREDIT_AMT2>`;
+            xmlBase += `<REF_TEXT1>`+ pago.n_carpeta +`</REF_TEXT1>`;
+            xmlBase += `<REF_TEXT2>`+ concepto +`</REF_TEXT2>`;
+            xmlBase += `<DESC_TEXT>`+ 'CLIENTES NACIONALES ' +`</DESC_TEXT>`;
+            xmlBase += `<BRAN_CODE>`+ '' +`</BRAN_CODE>`;
+            xmlBase += `<PROFIT_CODE>`+ '' +`</PROFIT_CODE>`;
+            xmlBase += `<CURRENCY_CODE>`+ 'CLP' +`</CURRENCY_CODE>`;
+            xmlBase += `<RATE_EXCHANGE>`+ 1 +`</RATE_EXCHANGE>`;
+            xmlBase += `<DEBIT_AMT3>`+ 0 +`</DEBIT_AMT3>`;
+            xmlBase += `<CREDIT_AMT3>`+ 0 +`</CREDIT_AMT3>`;
+            xmlBase += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
+            xmlBase += `</DETAIL>`;  
+
+            xmlBase +=`</BATCH></string>`;
+
+            send_pago_maximise(xmlBase, -1)
+
+        }
+
+        async function send_pago_maximise(xml, fk_cabecera) {
+
+            console.log(xml);
+                    
+            const request = require('request');
+            const fs = require("fs");
+
+            const data = {
+                AliasName: 'dwi_tnm',
+                UserName: 'webservice',
+                Password: 'webservice001',
+                Data: xml
+            };
+
+            const options = {
+                url: 'http://asp3.maximise.cl/wsv/batch.asmx/SaveDocument',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/html',
+                    'Content-Length': data.length
+                },
+                json: true,
+                form: {
+                    AliasName: 'dwi_tnm',
+                    UserName: 'webservice',
+                    Password: 'webservice001',
+                    Data: xml
+                }
+            };
+
+            request.post(options, (err, res, body) => {
+
+                if(err) { 
+                    console.log('error, ' + err);
+                }
+                else if(body) {   
+                    console.log(" RESPUESTA ");
+                    if(res.statusCode!=200 ){
+                        
+                        console.log("ERROR "); 
+                        console.log(JSON.stringify(res.body));
+
+                    } else if(res.statusCode==200 ) {
+
+                        console.log("\n\nSUCCESS "); 
+                        console.log("\n\n"+JSON.stringify(res.body));
+                        var RespMax = JSON.stringify(res.body);
+                        var IdMax = RespMax.match(/<int xmlns=\"Maximise\">([^<]*)<\/int>/);
+                        console.log('\n\nId Maximise '+IdMax);
+                        if (fk_cabecera != -1) 
+                        {
+                            actualizar_estado_bd('MAXIMISE', fk_cabecera, IdMax)
+                        }
+                    } 
+                }
+            });
+                                
+        }
+
+        async function actualizar_estado_bd(estado, fk_cabecera, IdMax) {
+            
+            var moment = require('moment');
+            let fecha = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
+
+            var query = '';
+                query+=`estado='`+estado+`', `;
+                query+=`id_maximise='`+IdMax+`', `;
+                query+=`"fk_updatedBy"=`+carpeta_data.rows[0]["fk_createdBy"]+`, `;
+                query+=`"updatedAt"='`+fecha+`'`;
+
+            console.log(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
+            await client.query(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
+                
+            client.query(` UPDATE public.queue_maximise SET estado='${estado}' WHERE id=${tarea.id} `);
+            
+        }
+    }
+
+    async function enviar_pago_usd_maximise(tarea) { 
+        console.log('Envio de pago usd')
+        client.query(` UPDATE public.queue_maximise SET estado='PROCESANDO' WHERE id=${tarea.id} `);
+
+        var carpeta_data = await client.query(` SELECT id, fk_responsable, errores, estado, cmpy_code, year_num, period_num, jour_code, entry_code, debit_amt, credit_amt, post_flag, com_text, cleared_flag, control_amt, debit_amt1, credit_amt1, debit_amt2, credit_amt2, debit_amt3, credit_amt3, tran_type_ind, ledger_code, fk_despacho, fk_nota_cobro, carpeta, codigo_cliente, monto, descripcion_movimiento, saldo, fecha_ingreso, fecha_registro, "fk_createdBy", "fk_updatedBy", "createdAt", "updatedAt", codigo_bi_pago, conversion, razon_social, 
+                                                    to_char(entry_date, 'DD-MM-YYYY') as entry_date, 
+                                                    to_char(jour_date, 'DD-MM-YYYY') as jour_date, 
+                                                    to_char(fecha_movimiento, 'DD-MM-YYYY') as fecha_movimiento
+                                                FROM public.wsc_envio_asientos_cabeceras where id=${tarea['fk_cabecera']}`);
+
+        if(carpeta_data.rows.length>0) {
+
+            let cmpy_code = carpeta_data.rows[0].cmpy_code;
+            let year_num = carpeta_data.rows[0].year_num;
+            let period_num = carpeta_data.rows[0].period_num;
+            let jour_code = carpeta_data.rows[0].jour_code;
+            let entry_code = carpeta_data.rows[0].entry_code;
+            let entry_date = carpeta_data.rows[0].entry_date;
+            let jour_date = carpeta_data.rows[0].jour_date;
+            let debit_amt = carpeta_data.rows[0].debit_amt;
+            let credit_amt = carpeta_data.rows[0].credit_amt;
+            let post_flag = carpeta_data.rows[0].post_flag;
+            let com_text = carpeta_data.rows[0].com_text;
+            let cleared_flag = carpeta_data.rows[0].cleared_flag;
+            let control_amt = carpeta_data.rows[0].control_amt;
+            let debit_amt1 = carpeta_data.rows[0].debit_amt1;
+            let credit_amt1 = carpeta_data.rows[0].credit_amt1;
+            let debit_amt2 = carpeta_data.rows[0].debit_amt2;
+            let credit_amt2 = carpeta_data.rows[0].credit_amt2;
+            let tran_type_ind = carpeta_data.rows[0].tran_type_ind;
+            let ledger_code = carpeta_data.rows[0].ledger_code;
+            let debit_amt3 = carpeta_data.rows[0].debit_amt3;
+            let credit_amt3 = carpeta_data.rows[0].credit_amt3;
+            let rate_exchange = carpeta_data.rows[0].conversion;
+            let razon_social = carpeta_data.rows[0].razon_social;
+
+            let carpeta = carpeta_data.rows[0].carpeta;
+            let monto = carpeta_data.rows[0].monto;
+            let codigo_cliente = carpeta_data.rows[0].codigo_cliente;
+            let fecha_movimiento = carpeta_data.rows[0].fecha_movimiento;
+
+            var xmltext_aux = `<string xmlns="Maximise"><BATCH><HEAD>`;
+            xmltext_aux += `<CMPY_CODE>`+ cmpy_code +`</CMPY_CODE>`;
+            xmltext_aux += `<YEAR_NUM>`+ year_num +`</YEAR_NUM>`;
+            xmltext_aux += `<PERIOD_NUM>`+ period_num +`</PERIOD_NUM>`;
+            xmltext_aux += `<JOUR_CODE>`+ jour_code +`</JOUR_CODE>`;
+            xmltext_aux += `<ENTRY_CODE>`+ entry_code +`</ENTRY_CODE>`;
+            xmltext_aux += `<ENTRY_DATE>`+ entry_date +`</ENTRY_DATE>`;
+            xmltext_aux += `<JOUR_DATE>`+ jour_date +`</JOUR_DATE>`;
+            xmltext_aux += `<DEBIT_AMT>`+ debit_amt +`</DEBIT_AMT>`;
+            xmltext_aux += `<CREDIT_AMT>`+ credit_amt +`</CREDIT_AMT>`;
+            xmltext_aux += `<POST_FLAG>`+ post_flag +`</POST_FLAG>`;
+            xmltext_aux += `<COM_TEXT>`+ com_text +`</COM_TEXT>`;
+            xmltext_aux += `<CLEARED_FLAG>`+ cleared_flag +`</CLEARED_FLAG>`;
+            xmltext_aux += `<CONTROL_AMT>`+ control_amt +`</CONTROL_AMT>`;
+            xmltext_aux += `<DEBIT_AMT1>`+ debit_amt1 +`</DEBIT_AMT1>`;
+            xmltext_aux += `<CREDIT_AMT1>`+ credit_amt1 +`</CREDIT_AMT1>`;
+            xmltext_aux += `<DEBIT_AMT2>`+ debit_amt2 +`</DEBIT_AMT2>`;
+            xmltext_aux += `<CREDIT_AMT2>`+ credit_amt2 +`</CREDIT_AMT2>`;
+            xmltext_aux += `<TRAN_TYPE_IND>`+ tran_type_ind +`</TRAN_TYPE_IND>`;
+            xmltext_aux += `<LEDGER_CODE>`+ ledger_code +`</LEDGER_CODE>`;
+            xmltext_aux += `<DEBIT_AMT3>`+ debit_amt3 +`</DEBIT_AMT3>`;
+            xmltext_aux += `<CREDIT_AMT3>`+ credit_amt3 +`</CREDIT_AMT3>`;
+            xmltext_aux += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
+            xmltext_aux += `<RATE_EXCHANGE >`+ rate_exchange +`</RATE_EXCHANGE >`;
+            xmltext_aux += `</HEAD>`;
+
+            let pago = {
+                n_carpeta: carpeta,
+                monto: monto,
+                cliente: codigo_cliente,
+                fecha: fecha_movimiento,
+                conversion: rate_exchange
+            }
+
+            consultar_carpeta_maximise(tarea['fk_cabecera'], pago, xmltext_aux, razon_social);
+        
+        } 
+
+        async function consultar_carpeta_maximise(fk_cabecera, pago, xmltext_aux, razon_social) {
+    
+            const request = require('request');
+            const fs = require("fs");
+    
+            const xmltext = `SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num, 
+                            (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND (CMPY_CODE='02' OR CMPY_CODE='03' OR CMPY_CODE='04')) as total_credito
+                            FROM invoicehead ih
+                            WHERE ih.cmpy_code='04' and 
+                            ih.POSTED_FLAG<>'V' and 
+                            ih.ref_text1='${pago.n_carpeta}' 
+                            ORDER BY ih.doc_code asc;`;
+    
+            const data = {
+                AliasName: 'dwi_tnm',
+                UserName: 'webservice',
+                Password: 'webservice001',
+                Sql: xmltext
+            };
+    
+            const options = {
+                url: 'http://asp3.maximise.cl/wsv/query.asmx/GetQueryAsDataSet',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/html',
+                    'Content-Length': data.length
+                },
+                json: true,
+                form: {
+                    AliasName: 'dwi_tnm',
+                    UserName: 'webservice',
+                    Password: 'webservice001',
+                    Sql: xmltext
+                }
+            };
+    
+            try {
+    
+                request.post(options, async(err, res, body) => {
+    
+                    if(err) 
+                    { 
+                        console.log(err);
+                    }
+                    else if(body) 
+                    {   
+                        console.log(" RESPONSE GET INVOICEHEAD ");
+                        if(res.statusCode!=200){
+    
+                            console.log("ERROR");
+                            console.log(JSON.stringify(res.body));
+    
+                        }
+                        else if(res.statusCode==200 )
+                        {
+                            var documentos = [];
+                            var payment = Number(pago.monto) * Number(pago.conversion);
+    
+                            var entries = JSON.stringify(body).split('<Table');
+    
+                            let resp_cust_code = '';
+                            let nota_debito = 0;
+    
+                            //GUARDO DOCUMENTOS EN ARRAY DE OBJETOS
+                            for(var j=1; j<entries.length; j++) {
+                                let resp_inv_num = entries[j].split('<INV_NUM>').pop().split('</INV_NUM>')[0];
+                                let resp_doc_code = entries[j].split('<doc_code>').pop().split('</doc_code>')[0];
+                                resp_cust_code = entries[j].split('<cust_code>').pop().split('</cust_code>')[0];
+                                let resp_paid_amt = entries[j].split('<PAID_AMT>').pop().split('</PAID_AMT>')[0];
+                                let resp_total_amt = entries[j].split('<TOTAL_AMT>').pop().split('</TOTAL_AMT>')[0];
+                                let resp_ref_text1 = entries[j].split('<REF_TEXT1>').pop().split('</REF_TEXT1>')[0];
+                                let resp_ref_text2 = entries[j].split('<REF_TEXT2>').pop().split('</REF_TEXT2>')[0];
+                                let resp_ext_num = entries[j].split('<ext_num>').pop().split('</ext_num>')[0];
+                                let resp_total_credito = entries[j].split('<total_credito>').pop().split('</total_credito>')[0];
+                                let resp_cred_num = entries[j].split('<cred_num>').pop().split('</cred_num>')[0];
+    
+                                let resp_por_pagar = Number(resp_total_amt) - Number(resp_paid_amt);
+    
+                                try {
+                                    if (Number(resp_total_credito) > 0) {
+                                        resp_por_pagar -= Number(resp_total_credito)
+                                    }
+                                } catch {
+    
+                                }
+    
+                                if (resp_doc_code == 'F8') {
+                                    resp_por_pagar += nota_debito;
+                                }
+    
+                                if (resp_doc_code == 'D1'){
+                                    nota_debito = Number(resp_total_amt)
+    
+                                } else if (resp_doc_code != 'P8' && resp_por_pagar > 10) {
+                                    documentos.push({
+                                        resp_inv_num: resp_inv_num,
+                                        resp_doc_code: resp_doc_code,
+                                        resp_paid_amt: resp_paid_amt,
+                                        resp_total_amt: resp_total_amt,
+                                        resp_por_pagar: resp_por_pagar,
+                                        resp_ref_text1: resp_ref_text1,
+                                        resp_ref_text2: resp_ref_text2,
+                                        resp_ext_num: resp_ext_num
+                                    })
+                                }
+                            }
+                            console.log(documentos);
+    
+                            if (documentos.length == 0) {
+                                //DINERO SE IRA A EXCEDENTE, PERO HAY CAMPOS QUE DEBO CONSULTAR DESDE OTRA FUENTE
+                                resp_cust_code = await get_cliente_rut(pago.cliente.split(' ')[0]);
+                                if (resp_cust_code == false) {
+                                    return false;
+                                }
+                            }
+    
+                            // BANCO BANCO BANCO BANCO BANCO BANCO BANCO BANCO BANCO
+    
+                            var auto_num = 1;
+    
+                            let bco_fk_cabecera = fk_cabecera;
+                            let bco_seq_num = auto_num;
+                            let bco_analysis_text = '';
+                            let bco_tran_date = pago.fecha;
+                            let bco_ref_text = resp_cust_code;
+                            let bco_ref_num = 0;
+                            let bco_debit_amt = payment;
+                            let bco_credit_amt = 0;
+                            let bco_debit_amt1 = payment/Number(pago.conversion);
+                            let bco_credit_amt1 = 0;
+                            let bco_debit_amt2 = 0;
+                            let bco_credit_amt2 = 0;
+                            let bco_debit_amt3 = 0;
+                            let bco_credit_amt3 = 0;
+                            let bco_ref_text1 = pago.n_carpeta;
+                            let bco_bran_code = '';
+                            let bco_profit_code = '';
+                            let bco_currency_code = 'USD';
+                            let bco_rate_exchange = 1;
+    
+                            let bco_acct_code = '11103002-000';
+                            let bco_ref_text2 = resp_cust_code;
+                            let bco_desc_text = 'BANCO SANTANDER';
+    
+                            columna = '';                           valor = '';
+                            columna+=`"fk_cabecera",`;              valor+=`'`+ bco_fk_cabecera +`',`;
+                            columna+=`"seq_num",`;                  valor+=`'`+ bco_seq_num +`',`;
+                            columna+=`"analysis_text",`;            valor+=`'`+ bco_analysis_text +`',`;
+                            columna+=`"tran_date",`;                valor+=`'`+ bco_tran_date +`',`;
+                            columna+=`"ref_text",`;                 valor+=`'`+ bco_ref_text +`',`;
+                            columna+=`"ref_num",`;                  valor+=`'`+ bco_ref_num +`',`;
+                            columna+=`"debit_amt",`;                valor+=`'`+ bco_debit_amt +`',`;
+                            columna+=`"credit_amt",`;               valor+=`'`+ bco_credit_amt +`',`;
+                            columna+=`"debit_amt1",`;               valor+=`'`+ bco_debit_amt1 +`',`;
+                            columna+=`"credit_amt1",`;              valor+=`'`+ bco_credit_amt1 +`',`;
+                            columna+=`"debit_amt2",`;               valor+=`'`+ bco_debit_amt2 +`',`;
+                            columna+=`"credit_amt2",`;              valor+=`'`+ bco_credit_amt2 +`',`;
+                            columna+=`"debit_amt3",`;               valor+=`'`+ bco_debit_amt3 +`',`;
+                            columna+=`"credit_amt3",`;              valor+=`'`+ bco_credit_amt3 +`',`;
+                            columna+=`"ref_text1",`;                valor+=`'`+ bco_ref_text1 +`',`;
+                            columna+=`"bran_code",`;                valor+=`'`+ bco_bran_code +`',`;
+                            columna+=`"profit_code",`;              valor+=`'`+ bco_profit_code +`',`;
+                            columna+=`"currency_code",`;            valor+=`'`+ bco_currency_code +`',`;
+                            columna+=`"rate_exchange",`;            valor+=`'`+ bco_rate_exchange +`',`;
+                            columna+=`"acct_code",`;                valor+=`'`+ bco_acct_code +`',`;
+                            columna+=`"ref_text2",`;                valor+=`'`+ bco_ref_text2 +`',`;
+                            columna+=`"desc_text"`;                 valor+=`'`+ bco_desc_text +`'`;
+    
+                            save_detalle(columna, valor);
+                            /** XML DETALLE BANCO  **/
+                            xmltext_aux += `<DETAIL>`;
+                            xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
+                            xmltext_aux += `<SEQ_NUM>`+ bco_seq_num +`</SEQ_NUM>`;
+                            xmltext_aux += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
+                            xmltext_aux += `<ANALYSIS_TEXT>`+ bco_analysis_text +`</ANALYSIS_TEXT>`;
+                            xmltext_aux += `<TRAN_DATE>`+ bco_tran_date +`</TRAN_DATE>`;
+                            xmltext_aux += `<REF_TEXT>`+ bco_ref_text +`</REF_TEXT>`;
+                            xmltext_aux += `<REF_NUM>`+ bco_ref_num +`</REF_NUM>`;
+                            xmltext_aux += `<ACCT_CODE>`+ bco_acct_code +`</ACCT_CODE>`;
+                            xmltext_aux += `<DEBIT_AMT>`+ bco_debit_amt +`</DEBIT_AMT>`;
+                            xmltext_aux += `<CREDIT_AMT>`+ bco_credit_amt +`</CREDIT_AMT>`;
+                            xmltext_aux += `<DEBIT_AMT1>`+ bco_debit_amt1 +`</DEBIT_AMT1>`;
+                            xmltext_aux += `<CREDIT_AMT1>`+ bco_credit_amt1 +`</CREDIT_AMT1>`;
+                            xmltext_aux += `<DEBIT_AMT2>`+ bco_debit_amt2 +`</DEBIT_AMT2>`;
+                            xmltext_aux += `<CREDIT_AMT2>`+ bco_credit_amt2 +`</CREDIT_AMT2>`;
+                            xmltext_aux += `<REF_TEXT1>`+ bco_ref_text1 +`</REF_TEXT1>`;
+                            xmltext_aux += `<REF_TEXT2>`+ bco_ref_text2 +`</REF_TEXT2>`;
+                            xmltext_aux += `<DESC_TEXT>`+ bco_desc_text +`</DESC_TEXT>`;
+                            xmltext_aux += `<BRAN_CODE>`+ bco_bran_code +`</BRAN_CODE>`;
+                            xmltext_aux += `<PROFIT_CODE>`+ bco_profit_code +`</PROFIT_CODE>`;
+                            xmltext_aux += `<CURRENCY_CODE>`+ bco_currency_code +`</CURRENCY_CODE>`;
+                            xmltext_aux += `<RATE_EXCHANGE>`+ bco_rate_exchange +`</RATE_EXCHANGE>`;
+                            xmltext_aux += `<DEBIT_AMT3>`+ bco_debit_amt3 +`</DEBIT_AMT3>`;
+                            xmltext_aux += `<CREDIT_AMT3>`+ bco_credit_amt3 +`</CREDIT_AMT3>`;
+                            xmltext_aux += `<JOUR_CODE >`+ 'IPC' +`</JOUR_CODE >`;
+    
+                            xmltext_aux += `</DETAIL>`;
+    
+                            auto_num++;
+                            // DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO
+                            for (let i=0; i<documentos.length; i++) {
+    
+                                console.log(documentos[i].resp_inv_num);
+    
+                                var curr_pay = 0;
+                                if(payment - documentos[i].resp_por_pagar >= 0) {
+                                    curr_pay = documentos[i].resp_por_pagar;
+                                    payment -= documentos[i].resp_por_pagar;
+                                } else {
+                                    curr_pay = payment;
+                                    payment = 0;
+                                }
+    
+                                let doc_fk_cabecera = fk_cabecera;
+                                let doc_seq_num = auto_num;
+                                let doc_analysis_text = resp_cust_code;
+                                let doc_tran_date = pago.fecha;
+                                let doc_ref_text = resp_cust_code;
+                                let doc_ref_num = (documentos[i].resp_inv_num==''||documentos[i].resp_inv_num==null||documentos[i].resp_inv_num==undefined)?0:documentos[i].resp_inv_num;
+                                let doc_debit_amt = 0;
+                                let doc_credit_amt = curr_pay;
+                                let doc_debit_amt1 = 0;
+                                let doc_credit_amt1 = curr_pay/Number(pago.conversion);
+                                let doc_debit_amt2 = 0;
+                                let doc_credit_amt2 = 0;
+                                let doc_debit_amt3 = 0;
+                                let doc_credit_amt3 = 0;
+                                let doc_ref_text1 = pago.n_carpeta;
+                                let doc_bran_code = '1';
+                                let doc_profit_code = 'CM';
+                                let doc_currency_code = 'USD';
+                                let doc_rate_exchange = 1;
+                                let doc_desc_text = razon_social.replace('&', '');
+    
+                                let doc_acct_code = '11301001-001';
+                                let doc_ref_text2 = 'PAGO DIN WSC';
+    
+                                if (documentos[i].resp_doc_code != 'DI') {
+                                    doc_acct_code = '11301001-000';
+                                    doc_ref_text2 = 'PAGO FACT';
+                                } 
+    
+                                columna = '';                           valor = '';
+                                columna+=`"fk_cabecera",`;              valor+=`'`+ doc_fk_cabecera +`',`;
+                                columna+=`"seq_num",`;                  valor+=`'`+ doc_seq_num +`',`;
+                                columna+=`"analysis_text",`;            valor+=`'`+ doc_analysis_text +`',`;
+                                columna+=`"tran_date",`;                valor+=`'`+ doc_tran_date +`',`;
+                                columna+=`"ref_text",`;                 valor+=`'`+ doc_ref_text +`',`;
+                                columna+=`"ref_num",`;                  valor+=`'`+ doc_ref_num +`',`;
+                                columna+=`"debit_amt",`;                valor+=`'`+ doc_debit_amt +`',`;
+                                columna+=`"credit_amt",`;               valor+=`'`+ doc_credit_amt +`',`;
+                                columna+=`"debit_amt1",`;               valor+=`'`+ doc_debit_amt1 +`',`;
+                                columna+=`"credit_amt1",`;              valor+=`'`+ doc_credit_amt1 +`',`;
+                                columna+=`"debit_amt2",`;               valor+=`'`+ doc_debit_amt2 +`',`;
+                                columna+=`"credit_amt2",`;              valor+=`'`+ doc_credit_amt2 +`',`;
+                                columna+=`"debit_amt3",`;               valor+=`'`+ doc_debit_amt3 +`',`;
+                                columna+=`"credit_amt3",`;              valor+=`'`+ doc_credit_amt3 +`',`;
+                                columna+=`"ref_text1",`;                valor+=`'`+ doc_ref_text1 +`',`;
+                                columna+=`"bran_code",`;                valor+=`'`+ doc_bran_code +`',`;
+                                columna+=`"profit_code",`;              valor+=`'`+ doc_profit_code +`',`;
+                                columna+=`"currency_code",`;            valor+=`'`+ doc_currency_code +`',`;
+                                columna+=`"rate_exchange",`;            valor+=`'`+ doc_rate_exchange +`',`;
+                                columna+=`"acct_code",`;                valor+=`'`+ doc_acct_code +`',`;
+                                columna+=`"ref_text2",`;                valor+=`'`+ doc_ref_text2 +`',`;
+                                columna+=`"desc_text"`;                 valor+=`'`+ doc_desc_text +`'`;
+    
+                                save_detalle(columna, valor);
+                                /** XML DETALLE DOCUMENTO **/
+                                xmltext_aux += `<DETAIL>`;
+                                xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
+                                xmltext_aux += `<SEQ_NUM>`+ doc_seq_num +`</SEQ_NUM>`;
+                                xmltext_aux += `<TRAN_TYPE_IND>`+ 'CPA' +`</TRAN_TYPE_IND>`;
+                                xmltext_aux += `<ANALYSIS_TEXT>`+ doc_analysis_text +`</ANALYSIS_TEXT>`;
+                                xmltext_aux += `<TRAN_DATE>`+ doc_tran_date +`</TRAN_DATE>`;
+                                xmltext_aux += `<REF_TEXT>`+ doc_ref_text +`</REF_TEXT>`;
+                                xmltext_aux += `<REF_NUM>`+ doc_ref_num +`</REF_NUM>`;
+                                xmltext_aux += `<ACCT_CODE>`+ doc_acct_code +`</ACCT_CODE>`;
+                                xmltext_aux += `<DEBIT_AMT>`+ doc_debit_amt +`</DEBIT_AMT>`;
+                                xmltext_aux += `<CREDIT_AMT>`+ doc_credit_amt +`</CREDIT_AMT>`;
+                                xmltext_aux += `<DEBIT_AMT1>`+ doc_debit_amt1 +`</DEBIT_AMT1>`;
+                                xmltext_aux += `<CREDIT_AMT1>`+ doc_credit_amt1 +`</CREDIT_AMT1>`;
+                                xmltext_aux += `<DEBIT_AMT2>`+ doc_debit_amt2 +`</DEBIT_AMT2>`;
+                                xmltext_aux += `<CREDIT_AMT2>`+ doc_credit_amt2 +`</CREDIT_AMT2>`;
+                                xmltext_aux += `<REF_TEXT1>`+ doc_ref_text1 +`</REF_TEXT1>`;
+                                xmltext_aux += `<REF_TEXT2>`+ doc_ref_text2 +`</REF_TEXT2>`;
+                                xmltext_aux += `<DESC_TEXT>`+ doc_desc_text +`</DESC_TEXT>`;
+                                xmltext_aux += `<BRAN_CODE>`+ doc_bran_code +`</BRAN_CODE>`;
+                                xmltext_aux += `<PROFIT_CODE>`+ doc_profit_code +`</PROFIT_CODE>`;
+                                xmltext_aux += `<CURRENCY_CODE>`+ doc_currency_code +`</CURRENCY_CODE>`;
+                                xmltext_aux += `<RATE_EXCHANGE>`+ doc_rate_exchange +`</RATE_EXCHANGE>`;
+                                xmltext_aux += `<DEBIT_AMT3>`+ doc_debit_amt3 +`</DEBIT_AMT3>`;
+                                xmltext_aux += `<CREDIT_AMT3>`+ doc_credit_amt3 +`</CREDIT_AMT3>`;
+                                xmltext_aux += `<REF_AMT>`+ doc_credit_amt +`</REF_AMT>`;
+                                xmltext_aux += `<JOUR_CODE >`+ 'IPC' +`</JOUR_CODE >`;
+    
+                                xmltext_aux += `</DETAIL>`;
+    
+                                if (payment == 0) {
+                                    break;
+                                }
+                                auto_num++;
+                            }
+    
+                            if (payment > 0) {//SOBRO DINERO, SE AGREGA A AJUSTE
+    
+                                let aju_fk_cabecera = fk_cabecera;
+                                let aju_seq_num = auto_num;
+                                let aju_analysis_text = resp_cust_code;
+                                let aju_tran_date = pago.fecha;
+                                let aju_ref_text = resp_cust_code;
+                                let aju_ref_num = 0;
+                                let aju_debit_amt = 0;
+                                let aju_credit_amt = payment;
+                                let aju_debit_amt1 = 0;
+                                let aju_credit_amt1 = payment/Number(pago.conversion);
+                                let aju_debit_amt2 = 0;
+                                let aju_credit_amt2 = 0;
+                                let aju_debit_amt3 = 0;
+                                let aju_credit_amt3 = 0;
+                                let aju_ref_text1 = pago.n_carpeta;
+                                let aju_bran_code = '';
+                                let aju_profit_code = '';
+                                let aju_currency_code = 'USD';
+                                let aju_rate_exchange = 1;
+        
+                                let aju_acct_code = '21102001-000';
+                                let aju_ref_text2 = 'EXCEDENTE CLIENTE';
+                                let aju_desc_text = razon_social.replace('&', '');
+        
+                                columna = '';                           valor = '';
+                                columna+=`"fk_cabecera",`;              valor+=`'`+ aju_fk_cabecera +`',`;
+                                columna+=`"seq_num",`;                  valor+=`'`+ aju_seq_num +`',`;
+                                columna+=`"analysis_text",`;            valor+=`'`+ aju_analysis_text +`',`;
+                                columna+=`"tran_date",`;                valor+=`'`+ aju_tran_date +`',`;
+                                columna+=`"ref_text",`;                 valor+=`'`+ aju_ref_text +`',`;
+                                columna+=`"ref_num",`;                  valor+=`'`+ aju_ref_num +`',`;
+                                columna+=`"debit_amt",`;                valor+=`'`+ aju_debit_amt +`',`;
+                                columna+=`"credit_amt",`;               valor+=`'`+ aju_credit_amt +`',`;
+                                columna+=`"debit_amt1",`;               valor+=`'`+ aju_debit_amt1 +`',`;
+                                columna+=`"credit_amt1",`;              valor+=`'`+ aju_credit_amt1 +`',`;
+                                columna+=`"debit_amt2",`;               valor+=`'`+ aju_debit_amt2 +`',`;
+                                columna+=`"credit_amt2",`;              valor+=`'`+ aju_credit_amt2 +`',`;
+                                columna+=`"debit_amt3",`;               valor+=`'`+ aju_debit_amt3 +`',`;
+                                columna+=`"credit_amt3",`;              valor+=`'`+ aju_credit_amt3 +`',`;
+                                columna+=`"ref_text1",`;                valor+=`'`+ aju_ref_text1 +`',`;
+                                columna+=`"bran_code",`;                valor+=`'`+ aju_bran_code +`',`;
+                                columna+=`"profit_code",`;              valor+=`'`+ aju_profit_code +`',`;
+                                columna+=`"currency_code",`;            valor+=`'`+ aju_currency_code +`',`;
+                                columna+=`"rate_exchange",`;            valor+=`'`+ aju_rate_exchange +`',`;
+                                columna+=`"acct_code",`;                valor+=`'`+ aju_acct_code +`',`;
+                                columna+=`"ref_text2",`;                valor+=`'`+ aju_ref_text2 +`',`;
+                                columna+=`"desc_text"`;                 valor+=`'`+ aju_desc_text +`'`;
+        
+                                save_detalle(columna, valor);
+                                /** XML DETALLE BANCO  **/
+                                xmltext_aux += `<DETAIL>`;
+                                xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
+                                xmltext_aux += `<SEQ_NUM>`+ aju_seq_num +`</SEQ_NUM>`;
+                                xmltext_aux += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
+                                xmltext_aux += `<ANALYSIS_TEXT>`+ aju_analysis_text +`</ANALYSIS_TEXT>`;
+                                xmltext_aux += `<TRAN_DATE>`+ aju_tran_date +`</TRAN_DATE>`;
+                                xmltext_aux += `<REF_TEXT>`+ aju_ref_text +`</REF_TEXT>`;
+                                xmltext_aux += `<REF_NUM>`+ aju_ref_num +`</REF_NUM>`;
+                                xmltext_aux += `<ACCT_CODE>`+ aju_acct_code +`</ACCT_CODE>`;
+                                xmltext_aux += `<DEBIT_AMT>`+ aju_debit_amt +`</DEBIT_AMT>`;
+                                xmltext_aux += `<CREDIT_AMT>`+ aju_credit_amt +`</CREDIT_AMT>`;
+                                xmltext_aux += `<DEBIT_AMT1>`+ aju_debit_amt1 +`</DEBIT_AMT1>`;
+                                xmltext_aux += `<CREDIT_AMT1>`+ aju_credit_amt1 +`</CREDIT_AMT1>`;
+                                xmltext_aux += `<DEBIT_AMT2>`+ aju_debit_amt2 +`</DEBIT_AMT2>`;
+                                xmltext_aux += `<CREDIT_AMT2>`+ aju_credit_amt2 +`</CREDIT_AMT2>`;
+                                xmltext_aux += `<REF_TEXT1>`+ aju_ref_text1 +`</REF_TEXT1>`;
+                                xmltext_aux += `<REF_TEXT2>`+ aju_ref_text2 +`</REF_TEXT2>`;
+                                xmltext_aux += `<DESC_TEXT>`+ aju_desc_text +`</DESC_TEXT>`;
+                                xmltext_aux += `<BRAN_CODE>`+ aju_bran_code +`</BRAN_CODE>`;
+                                xmltext_aux += `<PROFIT_CODE>`+ aju_profit_code +`</PROFIT_CODE>`;
+                                xmltext_aux += `<CURRENCY_CODE>`+ aju_currency_code +`</CURRENCY_CODE>`;
+                                xmltext_aux += `<RATE_EXCHANGE>`+ aju_rate_exchange +`</RATE_EXCHANGE>`;
+                                xmltext_aux += `<DEBIT_AMT3>`+ aju_debit_amt3 +`</DEBIT_AMT3>`;
+                                xmltext_aux += `<CREDIT_AMT3>`+ aju_credit_amt3 +`</CREDIT_AMT3>`;
+                                xmltext_aux += `<REF_AMT>`+ aju_credit_amt +`</REF_AMT>`;
+                                xmltext_aux += `<JOUR_CODE >`+ 'IPC' +`</JOUR_CODE >`;
+    
+                                xmltext_aux += `</DETAIL>`;
+                            }
+    
+                            xmltext_aux +=`</BATCH></string>`;
+                            send_pago_maximise(xmltext_aux, fk_cabecera)
+    
+                        }
+                    }
+                });
+            } catch (error) {
+                return false
+    
+            }
+        }
+    
+        async function get_cliente_rut(fk_cliente) {
+                    
+            var rut_cliente = await client.query(`SELECT rut FROM public.clientes WHERE id='${fk_cliente}'`); 
+            if (rut_cliente.rows.length > 0) {
+                return rut_cliente.rows[0]['rut'].replace('.', '').replace('.', '');
+            } else {
+                return false
+            }
+                                
+        }
+    
+        async function save_detalle(columna, valor) {
+            
+            console.log(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
+            var insert = await client.query(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
+                                
+        }
+    
+        async function send_pago_maximise(xml, fk_cabecera) {
+    
+            console.log(xml);
+                    
+            const request = require('request');
+            const fs = require("fs");
+    
+            const data = {
+                AliasName: 'dwi_tnm',
+                UserName: 'webservice',
+                Password: 'webservice001',
+                Data: xml
+            };
+    
+            const options = {
+                url: 'http://asp3.maximise.cl/wsv/batch.asmx/SaveDocument',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/html',
+                    'Content-Length': data.length
+                },
+                json: true,
+                form: {
+                    AliasName: 'dwi_tnm',
+                    UserName: 'webservice',
+                    Password: 'webservice001',
+                    Data: xml
+                }
+            };
+    
+    
+            request.post(options, (err, res, body) => {
+
+                if(err) { 
+                    console.log('error, ' + err);
+                }
+                else if(body) {   
+                    console.log(" RESPUESTA ");
+                    if(res.statusCode!=200 ){
+                        
+                        console.log("ERROR "); 
+                        console.log(JSON.stringify(res.body));
+
+                    } else if(res.statusCode==200 ) {
+
+                        console.log("\n\nSUCCESS "); 
+                        console.log("\n\n"+JSON.stringify(res.body));
+                        var RespMax = JSON.stringify(res.body);
+                        var IdMax = RespMax.match(/<int xmlns=\"Maximise\">([^<]*)<\/int>/);
+                        console.log('\n\nId Maximise '+IdMax);
+
+                        actualizar_estado_bd('MAXIMISE', fk_cabecera, IdMax)
+                    } 
+                }
+            });
+    
+                                
+        }
+    
+        async function actualizar_estado_bd(estado, fk_cabecera, IdMax) {
+            
+            var moment = require('moment');
+            let fecha = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
+    
+            var query = '';
+                query+=`estado='`+estado+`', `;
+                query+=`id_maximise='`+IdMax+`', `;
+                query+=`"fk_updatedBy"=`+carpeta_data.rows[0]["fk_createdBy"]+`, `;
+                query+=`"updatedAt"='`+fecha+`'`;
+    
+            console.log(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
+            await client.query(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
+
+            client.query(` UPDATE public.queue_maximise SET estado='${estado}' WHERE id=${tarea.id} `);
+                                
+        }
+    }    
+}
+
+exports.orquestador_server_1 = async (req, resp) => {
+    console.log("$.$");
+    console.log("$.$");
+    console.log("SCHEDULER MAXIMISE");
+    var sche_envio_maximise = require('node-schedule');
+
+    sche_envio_maximise.scheduleJob('*/60 * * * * *', () => {
+        console.log('');
+        console.log("CONSULTANDO COLA ");
+        console.log("$$$");
+        orquestador_server_1();
+
+    });
+
+    async function orquestador_server_1() { 
         var tarea = await client.query(` SELECT * FROM public.queue_maximise WHERE estado='PENDIENTE' ORDER BY id ASC limit 1`);
         console.log("$$$$$$");
         if(tarea.rows.length > 0) {
@@ -38,19 +1313,11 @@ exports.orquestador = async (req, resp) => {
             } else if (tarea.rows[0]['tarea'] == 'DOCUMENTOS COMER') {
                 enviar_documento_maximise_comer(tarea.rows[0])
 
-            } else if (tarea.rows[0]['tarea'] == 'PAGOS') {
-                enviar_pago_maximise(tarea.rows[0])
-
-            } else if (tarea.rows[0]['tarea'] == 'PAGOS USD') {
-                enviar_pago_usd_maximise(tarea.rows[0])
             }
 
         } else {
             console.log('NO HAY TAREAS PENDIENTES EN COLA');
         }
-        
-
-
     }
 
     async function enviar_documento_maximise_wsc(tarea) { 
@@ -1858,1248 +3125,7 @@ exports.orquestador = async (req, resp) => {
             
     }
 
-    async function enviar_pago_maximise(tarea) { 
-        console.log('Envio de pago')
-        client.query(` UPDATE public.queue_maximise SET estado='PROCESANDO' WHERE id=${tarea.id} `);
-
-        var carpeta_data = await client.query(` SELECT id, fk_responsable, errores, estado, cmpy_code, year_num, period_num, jour_code, entry_code, debit_amt, credit_amt, post_flag, com_text, cleared_flag, control_amt, debit_amt1, credit_amt1, debit_amt2, credit_amt2, debit_amt3, credit_amt3, tran_type_ind, ledger_code, fk_despacho, fk_nota_cobro, carpeta, codigo_cliente, monto, descripcion_movimiento, saldo, fecha_ingreso, fecha_registro, "fk_createdBy", "fk_updatedBy", "createdAt", "updatedAt", codigo_bi_pago, conversion, razon_social, 
-                                                    to_char(entry_date, 'DD-MM-YYYY') as entry_date, 
-                                                    to_char(jour_date, 'DD-MM-YYYY') as jour_date, 
-                                                    to_char(fecha_movimiento, 'DD-MM-YYYY') as fecha_movimiento
-                                                    FROM public.wsc_envio_asientos_cabeceras 
-                                                where id=${tarea['fk_cabecera']}`);
-
-        if(carpeta_data.rows.length>0) {
-
-            let cmpy_code = carpeta_data.rows[0].cmpy_code;
-            let year_num = carpeta_data.rows[0].year_num;
-            let period_num = carpeta_data.rows[0].period_num;
-            let jour_code = carpeta_data.rows[0].jour_code;
-            let entry_code = carpeta_data.rows[0].entry_code;
-            let entry_date = carpeta_data.rows[0].entry_date;
-            let jour_date = carpeta_data.rows[0].jour_date;
-            let debit_amt = carpeta_data.rows[0].debit_amt;
-            let credit_amt = carpeta_data.rows[0].credit_amt;
-            let post_flag = carpeta_data.rows[0].post_flag;
-            let com_text = carpeta_data.rows[0].com_text;
-            let cleared_flag = carpeta_data.rows[0].cleared_flag;
-            let control_amt = carpeta_data.rows[0].control_amt;
-            let debit_amt1 = carpeta_data.rows[0].debit_amt1;
-            let credit_amt1 = carpeta_data.rows[0].credit_amt1;
-            let debit_amt2 = carpeta_data.rows[0].debit_amt2;
-            let credit_amt2 = carpeta_data.rows[0].credit_amt2;
-            let tran_type_ind = carpeta_data.rows[0].tran_type_ind;
-            let ledger_code = carpeta_data.rows[0].ledger_code;
-            let debit_amt3 = carpeta_data.rows[0].debit_amt3;
-            let credit_amt3 = carpeta_data.rows[0].credit_amt3;
-            let razon_social = carpeta_data.rows[0].razon_social;
-
-            let carpeta = carpeta_data.rows[0].carpeta;
-            let monto = carpeta_data.rows[0].monto;
-            let codigo_cliente = carpeta_data.rows[0].codigo_cliente;
-            let fecha_movimiento = carpeta_data.rows[0].fecha_movimiento;
-
-            var xmltext_aux = `<string xmlns="Maximise"><BATCH><HEAD>`;
-            xmltext_aux += `<CMPY_CODE>`+ cmpy_code +`</CMPY_CODE>`;
-            xmltext_aux += `<YEAR_NUM>`+ year_num +`</YEAR_NUM>`;
-            xmltext_aux += `<PERIOD_NUM>`+ period_num +`</PERIOD_NUM>`;
-            xmltext_aux += `<JOUR_CODE>`+ jour_code +`</JOUR_CODE>`;
-            xmltext_aux += `<ENTRY_CODE>`+ entry_code +`</ENTRY_CODE>`;
-            xmltext_aux += `<ENTRY_DATE>`+ entry_date +`</ENTRY_DATE>`;
-            xmltext_aux += `<JOUR_DATE>`+ jour_date +`</JOUR_DATE>`;
-            xmltext_aux += `<DEBIT_AMT>`+ debit_amt +`</DEBIT_AMT>`;
-            xmltext_aux += `<CREDIT_AMT>`+ credit_amt +`</CREDIT_AMT>`;
-            xmltext_aux += `<POST_FLAG>`+ post_flag +`</POST_FLAG>`;
-            xmltext_aux += `<COM_TEXT>`+ com_text + tarea['fk_cabecera'] +`</COM_TEXT>`;
-            xmltext_aux += `<CLEARED_FLAG>`+ cleared_flag +`</CLEARED_FLAG>`;
-            xmltext_aux += `<CONTROL_AMT>`+ control_amt +`</CONTROL_AMT>`;
-            xmltext_aux += `<DEBIT_AMT1>`+ debit_amt1 +`</DEBIT_AMT1>`;
-            xmltext_aux += `<CREDIT_AMT1>`+ credit_amt1 +`</CREDIT_AMT1>`;
-            xmltext_aux += `<DEBIT_AMT2>`+ debit_amt2 +`</DEBIT_AMT2>`;
-            xmltext_aux += `<CREDIT_AMT2>`+ credit_amt2 +`</CREDIT_AMT2>`;
-            xmltext_aux += `<TRAN_TYPE_IND>`+ tran_type_ind +`</TRAN_TYPE_IND>`;
-            xmltext_aux += `<LEDGER_CODE>`+ ledger_code +`</LEDGER_CODE>`;
-            xmltext_aux += `<DEBIT_AMT3>`+ debit_amt3 +`</DEBIT_AMT3>`;
-            xmltext_aux += `<CREDIT_AMT3>`+ credit_amt3 +`</CREDIT_AMT3>`;
-            xmltext_aux += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
-            xmltext_aux += `</HEAD>`;
-
-            let pago = {
-                n_carpeta: carpeta,
-                monto: monto,
-                cliente: codigo_cliente,
-                fecha: fecha_movimiento
-            }
-
-            consultar_carpeta_maximise(tarea['fk_cabecera'], pago, xmltext_aux, razon_social);
-        
-        }            
-
-        async function consultar_carpeta_maximise(fk_cabecera, pago, xmltext_aux, razon_social) {
-
-            const request = require('request');
-            const fs = require("fs");
-
-            var xml_cws = xmltext_aux.split('CMPY_CODE')[0] + 'CMPY_CODE>03</CMPY_CODE' + xmltext_aux.split('CMPY_CODE')[2];
-
-            const xmltext = `SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num, 
-                            (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND (CMPY_CODE='02' OR CMPY_CODE='03' OR CMPY_CODE='04')) as total_credito,
-                            (SELECT SUM(TOTAL_AMT) - SUM(PAID_AMT) FROM invoicehead WHERE cmpy_code='03' AND ref_text1='${pago.n_carpeta}' AND ref_text2='PALLET' AND POSTED_FLAG<>'V') as pallet,
-                            (SELECT SUM(TOTAL_AMT) - SUM(PAID_AMT) FROM invoicehead WHERE cmpy_code='03' AND ref_text1='${pago.n_carpeta}' AND ref_text2='TVP' AND POSTED_FLAG<>'V') as tvp,
-                            (SELECT SUM(TOTAL_AMT) - SUM(PAID_AMT) FROM invoicehead WHERE cmpy_code='03' AND ref_text1='${pago.n_carpeta}' AND ref_text2='OTROS' AND POSTED_FLAG<>'V') as otros
-                            FROM invoicehead ih
-                            WHERE ih.cmpy_code='04' and 
-                            ih.POSTED_FLAG<>'V' and 
-                            ih.ref_text1='${pago.n_carpeta}' 
-                            ORDER BY ih.doc_code asc;`;
-
-            const data = {
-                AliasName: 'dwi_tnm',
-                UserName: 'webservice',
-                Password: 'webservice001',
-                Sql: xmltext
-            };
-
-            const options = {
-                url: 'http://asp3.maximise.cl/wsv/query.asmx/GetQueryAsDataSet',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/html',
-                    'Content-Length': data.length
-                },
-                json: true,
-                form: {
-                    AliasName: 'dwi_tnm',
-                    UserName: 'webservice',
-                    Password: 'webservice001',
-                    Sql: xmltext
-                }
-            };
-
-            try {
-
-                request.post(options, async(err, res, body) => {
-
-                    if(err) 
-                    { 
-                        console.log('ERROR ' + pago.n_carpeta + ', ' + err);
-                    }
-                    else if(body) 
-                    {   
-                        if(res.statusCode!=200){
-
-                            console.log('ERROR ' + pago.n_carpeta + ', ' + JSON.stringify(res.body));
-
-                        }
-                        else if(res.statusCode==200 )
-                        {
-                            var documentos = [];
-                            var payment = Number(pago.monto);
-
-                            var entries = JSON.stringify(body).split('<Table');
-
-                            let resp_cust_code = '';
-                            let nota_debito = 0;
-
-                            //GUARDO DOCUMENTOS EN ARRAY DE OBJETOS
-                            for(var j=1; j<entries.length; j++) {
-                                let resp_inv_num = entries[j].split('<INV_NUM>').pop().split('</INV_NUM>')[0];
-                                let resp_doc_code = entries[j].split('<doc_code>').pop().split('</doc_code>')[0];
-                                resp_cust_code = entries[j].split('<cust_code>').pop().split('</cust_code>')[0];
-                                let resp_paid_amt = entries[j].split('<PAID_AMT>').pop().split('</PAID_AMT>')[0];
-                                let resp_total_amt = entries[j].split('<TOTAL_AMT>').pop().split('</TOTAL_AMT>')[0];
-                                let resp_ref_text1 = entries[j].split('<REF_TEXT1>').pop().split('</REF_TEXT1>')[0];
-                                let resp_ref_text2 = entries[j].split('<REF_TEXT2>').pop().split('</REF_TEXT2>')[0];
-                                let resp_ext_num = entries[j].split('<ext_num>').pop().split('</ext_num>')[0];
-                                let resp_total_credito = entries[j].split('<total_credito>').pop().split('</total_credito>')[0];
-                                let resp_cred_num = entries[j].split('<cred_num>').pop().split('</cred_num>')[0];
-                                let resp_pallet = entries[j].split('<pallet>').pop().split('</pallet>')[0];
-                                let resp_tvp = entries[j].split('<tvp>').pop().split('</tvp>')[0];
-                                let resp_otros = entries[j].split('<otros>').pop().split('</otros>')[0];
-
-                                let resp_por_pagar = Number(resp_total_amt) - Number(resp_paid_amt);
-
-                                try {
-                                    if (Number(resp_total_credito) > 0) {
-                                        resp_por_pagar -= Number(resp_total_credito)
-                                    }
-                                } catch {
-
-                                }
-
-                                if (resp_doc_code == 'F8') {
-                                    resp_por_pagar += nota_debito;
-                                }
-
-                                if (resp_doc_code == 'D1'){
-                                    nota_debito = Number(resp_total_amt)
-
-                                //} else if (resp_doc_code != 'P8' && resp_por_pagar > 10) {
-                                } else if (resp_por_pagar > 10) {
-                                    documentos.push({
-                                        resp_inv_num: resp_inv_num,
-                                        resp_doc_code: resp_doc_code,
-                                        resp_paid_amt: resp_paid_amt,
-                                        resp_total_amt: resp_total_amt,
-                                        resp_por_pagar: resp_por_pagar,
-                                        resp_ref_text1: resp_ref_text1,
-                                        resp_ref_text2: resp_ref_text2,
-                                        resp_ext_num: resp_ext_num
-                                    })
-                                }
-
-                                if (j+1 == entries.length) {
-                                    if (! isNaN(resp_pallet) ) {
-                                        documentos.push({
-                                            resp_inv_num: resp_inv_num,
-                                            resp_doc_code: 'PALLET',
-                                            resp_por_pagar: Number(resp_pallet),
-                                        })
-                                    }
-                                    if (! isNaN(resp_tvp) ) {
-                                        documentos.push({
-                                            resp_inv_num: resp_inv_num,
-                                            resp_doc_code: 'TVP',
-                                            resp_por_pagar: Number(resp_tvp),
-                                        })
-                                    }
-                                    if (! isNaN(resp_otros) ) {
-                                        documentos.push({
-                                            resp_inv_num: resp_inv_num,
-                                            resp_doc_code: 'OTROS',
-                                            resp_por_pagar: Number(resp_otros),
-                                        })
-                                    }
-                                }
-
-                            }
-
-                            if (documentos.length == 0) {
-                                //DINERO SE IRA A EXCEDENTE, PERO HAY CAMPOS QUE DEBO CONSULTAR DESDE OTRA FUENTE
-                                resp_cust_code = await get_cliente_rut(pago.cliente.split(' ')[0]);
-                                if (resp_cust_code == false) {
-                                    return false;
-                                }
-                            }
-
-                            // BANCO BANCO BANCO BANCO BANCO BANCO BANCO BANCO BANCO
-
-                            var auto_num = 1;
-
-                            let bco_fk_cabecera = fk_cabecera;
-                            let bco_seq_num = auto_num;
-                            let bco_analysis_text = '';
-                            let bco_tran_date = pago.fecha;
-                            let bco_ref_text = resp_cust_code;
-                            let bco_ref_num = 0;
-                            let bco_debit_amt = payment;
-                            let bco_credit_amt = 0;
-                            let bco_debit_amt1 = 0;
-                            let bco_credit_amt1 = 0;
-                            let bco_debit_amt2 = 0;
-                            let bco_credit_amt2 = 0;
-                            let bco_debit_amt3 = 0;
-                            let bco_credit_amt3 = 0;
-                            let bco_ref_text1 = pago.n_carpeta;
-                            let bco_bran_code = '';
-                            let bco_profit_code = '';
-                            let bco_currency_code = 'CLP';
-                            let bco_rate_exchange = 1;
-
-                            let bco_acct_code = '11103001-000';
-                            let bco_ref_text2 = resp_cust_code;
-                            let bco_desc_text = 'BANCO SANTANDER';
-
-                            columna = '';                           valor = '';
-                            columna+=`"fk_cabecera",`;              valor+=`'`+ bco_fk_cabecera +`',`;
-                            columna+=`"seq_num",`;                  valor+=`'`+ bco_seq_num +`',`;
-                            columna+=`"analysis_text",`;            valor+=`'`+ bco_analysis_text +`',`;
-                            columna+=`"tran_date",`;                valor+=`'`+ bco_tran_date +`',`;
-                            columna+=`"ref_text",`;                 valor+=`'`+ bco_ref_text +`',`;
-                            columna+=`"ref_num",`;                  valor+=`'`+ bco_ref_num +`',`;
-                            columna+=`"debit_amt",`;                valor+=`'`+ bco_debit_amt +`',`;
-                            columna+=`"credit_amt",`;               valor+=`'`+ bco_credit_amt +`',`;
-                            columna+=`"debit_amt1",`;               valor+=`'`+ bco_debit_amt1 +`',`;
-                            columna+=`"credit_amt1",`;              valor+=`'`+ bco_credit_amt1 +`',`;
-                            columna+=`"debit_amt2",`;               valor+=`'`+ bco_debit_amt2 +`',`;
-                            columna+=`"credit_amt2",`;              valor+=`'`+ bco_credit_amt2 +`',`;
-                            columna+=`"debit_amt3",`;               valor+=`'`+ bco_debit_amt3 +`',`;
-                            columna+=`"credit_amt3",`;              valor+=`'`+ bco_credit_amt3 +`',`;
-                            columna+=`"ref_text1",`;                valor+=`'`+ bco_ref_text1 +`',`;
-                            columna+=`"bran_code",`;                valor+=`'`+ bco_bran_code +`',`;
-                            columna+=`"profit_code",`;              valor+=`'`+ bco_profit_code +`',`;
-                            columna+=`"currency_code",`;            valor+=`'`+ bco_currency_code +`',`;
-                            columna+=`"rate_exchange",`;            valor+=`'`+ bco_rate_exchange +`',`;
-                            columna+=`"acct_code",`;                valor+=`'`+ bco_acct_code +`',`;
-                            columna+=`"ref_text2",`;                valor+=`'`+ bco_ref_text2 +`',`;
-                            columna+=`"desc_text"`;                 valor+=`'`+ bco_desc_text +`'`;
-
-                            save_detalle(columna, valor);
-                            /** XML DETALLE BANCO  **/
-                            xmltext_aux += `<DETAIL>`;
-                            xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
-                            xmltext_aux += `<SEQ_NUM>`+ bco_seq_num +`</SEQ_NUM>`;
-                            xmltext_aux += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
-                            xmltext_aux += `<ANALYSIS_TEXT>`+ bco_analysis_text +`</ANALYSIS_TEXT>`;
-                            xmltext_aux += `<TRAN_DATE>`+ bco_tran_date +`</TRAN_DATE>`;
-                            xmltext_aux += `<REF_TEXT>`+ bco_ref_text +`</REF_TEXT>`;
-                            xmltext_aux += `<REF_NUM>`+ bco_ref_num +`</REF_NUM>`;
-                            xmltext_aux += `<ACCT_CODE>`+ bco_acct_code +`</ACCT_CODE>`;
-                            xmltext_aux += `<DEBIT_AMT>`+ bco_debit_amt +`</DEBIT_AMT>`;
-                            xmltext_aux += `<CREDIT_AMT>`+ bco_credit_amt +`</CREDIT_AMT>`;
-                            xmltext_aux += `<DEBIT_AMT1>`+ bco_debit_amt1 +`</DEBIT_AMT1>`;
-                            xmltext_aux += `<CREDIT_AMT1>`+ bco_credit_amt1 +`</CREDIT_AMT1>`;
-                            xmltext_aux += `<DEBIT_AMT2>`+ bco_debit_amt2 +`</DEBIT_AMT2>`;
-                            xmltext_aux += `<CREDIT_AMT2>`+ bco_credit_amt2 +`</CREDIT_AMT2>`;
-                            xmltext_aux += `<REF_TEXT1>`+ bco_ref_text1 +`</REF_TEXT1>`;
-                            xmltext_aux += `<REF_TEXT2>`+ bco_ref_text2 +`</REF_TEXT2>`;
-                            xmltext_aux += `<DESC_TEXT>`+ bco_desc_text.replace('&', 'y').replace('&', 'y') +`</DESC_TEXT>`;
-                            xmltext_aux += `<BRAN_CODE>`+ bco_bran_code +`</BRAN_CODE>`;
-                            xmltext_aux += `<PROFIT_CODE>`+ bco_profit_code +`</PROFIT_CODE>`;
-                            xmltext_aux += `<CURRENCY_CODE>`+ bco_currency_code +`</CURRENCY_CODE>`;
-                            xmltext_aux += `<RATE_EXCHANGE>`+ bco_rate_exchange +`</RATE_EXCHANGE>`;
-                            xmltext_aux += `<DEBIT_AMT3>`+ bco_debit_amt3 +`</DEBIT_AMT3>`;
-                            xmltext_aux += `<CREDIT_AMT3>`+ bco_credit_amt3 +`</CREDIT_AMT3>`;
-
-                            xmltext_aux += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
-
-                            xmltext_aux += `</DETAIL>`;
-
-                            auto_num++;
-                            // DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO
-                            for (let i=0; i<documentos.length; i++) {
-
-                                var curr_pay = 0;
-                                if(payment - documentos[i].resp_por_pagar >= 0) {
-                                    curr_pay = documentos[i].resp_por_pagar;
-                                    payment -= documentos[i].resp_por_pagar;
-                                } else {
-                                    curr_pay = payment;
-                                    payment = 0;
-                                }
-
-                                let doc_fk_cabecera = fk_cabecera;
-                                let doc_seq_num = auto_num;
-                                let doc_analysis_text = resp_cust_code;
-                                let doc_tran_date = pago.fecha;
-                                let doc_ref_text = resp_cust_code;
-                                let doc_ref_num = (documentos[i].resp_inv_num==''||documentos[i].resp_inv_num==null||documentos[i].resp_inv_num==undefined)?0:documentos[i].resp_inv_num;
-                                let doc_debit_amt = 0;
-                                let doc_credit_amt = curr_pay;
-                                let doc_debit_amt1 = 0;
-                                let doc_credit_amt1 = 0;
-                                let doc_debit_amt2 = 0;
-                                let doc_credit_amt2 = 0;
-                                let doc_debit_amt3 = 0;
-                                let doc_credit_amt3 = 0;
-                                let doc_ref_text1 = pago.n_carpeta;
-                                let doc_bran_code = '1';
-                                let doc_profit_code = 'CM';
-                                let doc_currency_code = 'CLP';
-                                let doc_rate_exchange = 1;
-                                let doc_desc_text = razon_social;
-
-                                let doc_acct_code = '11301001-001';
-                                let doc_ref_text2 = 'PAGO DIN WSC';
-
-                                if (documentos[i].resp_doc_code != 'DI') {
-                                    doc_acct_code = '11301001-000';
-                                    doc_ref_text2 = 'PAGO FACT';
-                                } 
-
-                                if (documentos[i].resp_doc_code == 'PALLET' || documentos[i].resp_doc_code == 'TVP' || documentos[i].resp_doc_code == 'OTROS') {
-                                    doc_acct_code = '21501002-000';
-                                    doc_ref_text2 = documentos[i].resp_doc_code;
-                                    crear_pago_wsc_cws(xml_cws, pago, resp_cust_code, curr_pay, documentos[i].resp_doc_code);
-                                }
-
-                                columna = '';                           valor = '';
-                                columna+=`"fk_cabecera",`;              valor+=`'`+ doc_fk_cabecera +`',`;
-                                columna+=`"seq_num",`;                  valor+=`'`+ doc_seq_num +`',`;
-                                columna+=`"analysis_text",`;            valor+=`'`+ doc_analysis_text +`',`;
-                                columna+=`"tran_date",`;                valor+=`'`+ doc_tran_date +`',`;
-                                columna+=`"ref_text",`;                 valor+=`'`+ doc_ref_text +`',`;
-                                columna+=`"ref_num",`;                  valor+=`'`+ doc_ref_num +`',`;
-                                columna+=`"debit_amt",`;                valor+=`'`+ doc_debit_amt +`',`;
-                                columna+=`"credit_amt",`;               valor+=`'`+ doc_credit_amt +`',`;
-                                columna+=`"debit_amt1",`;               valor+=`'`+ doc_debit_amt1 +`',`;
-                                columna+=`"credit_amt1",`;              valor+=`'`+ doc_credit_amt1 +`',`;
-                                columna+=`"debit_amt2",`;               valor+=`'`+ doc_debit_amt2 +`',`;
-                                columna+=`"credit_amt2",`;              valor+=`'`+ doc_credit_amt2 +`',`;
-                                columna+=`"debit_amt3",`;               valor+=`'`+ doc_debit_amt3 +`',`;
-                                columna+=`"credit_amt3",`;              valor+=`'`+ doc_credit_amt3 +`',`;
-                                columna+=`"ref_text1",`;                valor+=`'`+ doc_ref_text1 +`',`;
-                                columna+=`"bran_code",`;                valor+=`'`+ doc_bran_code +`',`;
-                                columna+=`"profit_code",`;              valor+=`'`+ doc_profit_code +`',`;
-                                columna+=`"currency_code",`;            valor+=`'`+ doc_currency_code +`',`;
-                                columna+=`"rate_exchange",`;            valor+=`'`+ doc_rate_exchange +`',`;
-                                columna+=`"acct_code",`;                valor+=`'`+ doc_acct_code +`',`;
-                                columna+=`"ref_text2",`;                valor+=`'`+ doc_ref_text2 +`',`;
-                                columna+=`"desc_text"`;                 valor+=`'`+ doc_desc_text +`'`;
-
-                                save_detalle(columna, valor);
-                                /** XML DETALLE DOCUMENTO **/
-                                xmltext_aux += `<DETAIL>`;
-                                xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
-                                xmltext_aux += `<SEQ_NUM>`+ doc_seq_num +`</SEQ_NUM>`;
-                                xmltext_aux += `<TRAN_TYPE_IND>`+ 'CPA' +`</TRAN_TYPE_IND>`;
-                                xmltext_aux += `<ANALYSIS_TEXT>`+ doc_analysis_text +`</ANALYSIS_TEXT>`;
-                                xmltext_aux += `<TRAN_DATE>`+ doc_tran_date +`</TRAN_DATE>`;
-                                xmltext_aux += `<REF_TEXT>`+ doc_ref_text +`</REF_TEXT>`;
-                                xmltext_aux += `<REF_NUM>`+ doc_ref_num +`</REF_NUM>`;
-                                xmltext_aux += `<ACCT_CODE>`+ doc_acct_code +`</ACCT_CODE>`;
-                                xmltext_aux += `<DEBIT_AMT>`+ doc_debit_amt +`</DEBIT_AMT>`;
-                                xmltext_aux += `<CREDIT_AMT>`+ doc_credit_amt +`</CREDIT_AMT>`;
-                                xmltext_aux += `<DEBIT_AMT1>`+ doc_debit_amt1 +`</DEBIT_AMT1>`;
-                                xmltext_aux += `<CREDIT_AMT1>`+ doc_credit_amt1 +`</CREDIT_AMT1>`;
-                                xmltext_aux += `<DEBIT_AMT2>`+ doc_debit_amt2 +`</DEBIT_AMT2>`;
-                                xmltext_aux += `<CREDIT_AMT2>`+ doc_credit_amt2 +`</CREDIT_AMT2>`;
-                                xmltext_aux += `<REF_TEXT1>`+ doc_ref_text1 +`</REF_TEXT1>`;
-                                xmltext_aux += `<REF_TEXT2>`+ doc_ref_text2 +`</REF_TEXT2>`;
-                                xmltext_aux += `<DESC_TEXT>`+ doc_desc_text.replace('&', 'y').replace('&', 'y') +`</DESC_TEXT>`;
-                                xmltext_aux += `<BRAN_CODE>`+ doc_bran_code +`</BRAN_CODE>`;
-                                xmltext_aux += `<PROFIT_CODE>`+ doc_profit_code +`</PROFIT_CODE>`;
-                                xmltext_aux += `<CURRENCY_CODE>`+ doc_currency_code +`</CURRENCY_CODE>`;
-                                xmltext_aux += `<RATE_EXCHANGE>`+ doc_rate_exchange +`</RATE_EXCHANGE>`;
-                                xmltext_aux += `<DEBIT_AMT3>`+ doc_debit_amt3 +`</DEBIT_AMT3>`;
-                                xmltext_aux += `<CREDIT_AMT3>`+ doc_credit_amt3 +`</CREDIT_AMT3>`;
-                                xmltext_aux += `<REF_AMT>`+ doc_credit_amt +`</REF_AMT>`;
-
-                                xmltext_aux += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
-
-                                xmltext_aux += `</DETAIL>`;
-
-                                if (payment == 0) {
-                                    break;
-                                }
-                                auto_num++;
-                            }
-
-                            if (payment > 0) {//SOBRO DINERO, SE AGREGA A AJUSTE
-
-                                let aju_fk_cabecera = fk_cabecera;
-                                let aju_seq_num = auto_num;
-                                let aju_analysis_text = resp_cust_code;
-                                let aju_tran_date = pago.fecha;
-                                let aju_ref_text = resp_cust_code;
-                                let aju_ref_num = 0;
-                                let aju_debit_amt = 0;
-                                let aju_credit_amt = payment;
-                                let aju_debit_amt1 = 0;
-                                let aju_credit_amt1 = 0;
-                                let aju_debit_amt2 = 0;
-                                let aju_credit_amt2 = 0;
-                                let aju_debit_amt3 = 0;
-                                let aju_credit_amt3 = 0;
-                                let aju_ref_text1 = pago.n_carpeta;
-                                let aju_bran_code = '';
-                                let aju_profit_code = '';
-                                let aju_currency_code = 'CLP';
-                                let aju_rate_exchange = 1;
-        
-                                let aju_acct_code = '21102001-000';
-                                let aju_ref_text2 = 'EXCEDENTE CLIENTE';
-                                let aju_desc_text = razon_social;
-        
-                                columna = '';                           valor = '';
-                                columna+=`"fk_cabecera",`;              valor+=`'`+ aju_fk_cabecera +`',`;
-                                columna+=`"seq_num",`;                  valor+=`'`+ aju_seq_num +`',`;
-                                columna+=`"analysis_text",`;            valor+=`'`+ aju_analysis_text +`',`;
-                                columna+=`"tran_date",`;                valor+=`'`+ aju_tran_date +`',`;
-                                columna+=`"ref_text",`;                 valor+=`'`+ aju_ref_text +`',`;
-                                columna+=`"ref_num",`;                  valor+=`'`+ aju_ref_num +`',`;
-                                columna+=`"debit_amt",`;                valor+=`'`+ aju_debit_amt +`',`;
-                                columna+=`"credit_amt",`;               valor+=`'`+ aju_credit_amt +`',`;
-                                columna+=`"debit_amt1",`;               valor+=`'`+ aju_debit_amt1 +`',`;
-                                columna+=`"credit_amt1",`;              valor+=`'`+ aju_credit_amt1 +`',`;
-                                columna+=`"debit_amt2",`;               valor+=`'`+ aju_debit_amt2 +`',`;
-                                columna+=`"credit_amt2",`;              valor+=`'`+ aju_credit_amt2 +`',`;
-                                columna+=`"debit_amt3",`;               valor+=`'`+ aju_debit_amt3 +`',`;
-                                columna+=`"credit_amt3",`;              valor+=`'`+ aju_credit_amt3 +`',`;
-                                columna+=`"ref_text1",`;                valor+=`'`+ aju_ref_text1 +`',`;
-                                columna+=`"bran_code",`;                valor+=`'`+ aju_bran_code +`',`;
-                                columna+=`"profit_code",`;              valor+=`'`+ aju_profit_code +`',`;
-                                columna+=`"currency_code",`;            valor+=`'`+ aju_currency_code +`',`;
-                                columna+=`"rate_exchange",`;            valor+=`'`+ aju_rate_exchange +`',`;
-                                columna+=`"acct_code",`;                valor+=`'`+ aju_acct_code +`',`;
-                                columna+=`"ref_text2",`;                valor+=`'`+ aju_ref_text2 +`',`;
-                                columna+=`"desc_text"`;                 valor+=`'`+ aju_desc_text +`'`;
-        
-                                save_detalle(columna, valor);
-                                /** XML DETALLE BANCO  **/
-                                xmltext_aux += `<DETAIL>`;
-                                xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
-                                xmltext_aux += `<SEQ_NUM>`+ aju_seq_num +`</SEQ_NUM>`;
-                                xmltext_aux += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
-                                xmltext_aux += `<ANALYSIS_TEXT>`+ aju_analysis_text +`</ANALYSIS_TEXT>`;
-                                xmltext_aux += `<TRAN_DATE>`+ aju_tran_date +`</TRAN_DATE>`;
-                                xmltext_aux += `<REF_TEXT>`+ aju_ref_text +`</REF_TEXT>`;
-                                xmltext_aux += `<REF_NUM>`+ aju_ref_num +`</REF_NUM>`;
-                                xmltext_aux += `<ACCT_CODE>`+ aju_acct_code +`</ACCT_CODE>`;
-                                xmltext_aux += `<DEBIT_AMT>`+ aju_debit_amt +`</DEBIT_AMT>`;
-                                xmltext_aux += `<CREDIT_AMT>`+ aju_credit_amt +`</CREDIT_AMT>`;
-                                xmltext_aux += `<DEBIT_AMT1>`+ aju_debit_amt1 +`</DEBIT_AMT1>`;
-                                xmltext_aux += `<CREDIT_AMT1>`+ aju_credit_amt1 +`</CREDIT_AMT1>`;
-                                xmltext_aux += `<DEBIT_AMT2>`+ aju_debit_amt2 +`</DEBIT_AMT2>`;
-                                xmltext_aux += `<CREDIT_AMT2>`+ aju_credit_amt2 +`</CREDIT_AMT2>`;
-                                xmltext_aux += `<REF_TEXT1>`+ aju_ref_text1 +`</REF_TEXT1>`;
-                                xmltext_aux += `<REF_TEXT2>`+ aju_ref_text2 +`</REF_TEXT2>`;
-                                xmltext_aux += `<DESC_TEXT>`+ aju_desc_text.replace('&', 'y').replace('&', 'y') +`</DESC_TEXT>`;
-                                xmltext_aux += `<BRAN_CODE>`+ aju_bran_code +`</BRAN_CODE>`;
-                                xmltext_aux += `<PROFIT_CODE>`+ aju_profit_code +`</PROFIT_CODE>`;
-                                xmltext_aux += `<CURRENCY_CODE>`+ aju_currency_code +`</CURRENCY_CODE>`;
-                                xmltext_aux += `<RATE_EXCHANGE>`+ aju_rate_exchange +`</RATE_EXCHANGE>`;
-                                xmltext_aux += `<DEBIT_AMT3>`+ aju_debit_amt3 +`</DEBIT_AMT3>`;
-                                xmltext_aux += `<CREDIT_AMT3>`+ aju_credit_amt3 +`</CREDIT_AMT3>`;
-
-                                xmltext_aux += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
-
-                                xmltext_aux += `</DETAIL>`;
-                            }
-
-                            xmltext_aux +=`</BATCH></string>`;
-                            send_pago_maximise(xmltext_aux, fk_cabecera)
-
-                        }
-                    }
-                });
-            } catch (error) {
-                console.log("ERROR "+error);
-
-            }
-        }
-
-        async function get_cliente_rut(fk_cliente) {
-                    
-            var rut_cliente = await client.query(`SELECT rut FROM public.clientes WHERE id='${fk_cliente}'`); 
-            if (rut_cliente.rows.length > 0) {
-                return rut_cliente.rows[0]['rut'].replace('.', '').replace('.', '');
-            } else {
-                return false
-            }
-                                
-        }
-
-        async function save_detalle(columna, valor) {
-            
-            console.log(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
-            var insert = await client.query(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
-                                
-        }
-
-        async function crear_pago_wsc_cws(xmlBase, pago, cust_code, monto, concepto) {
-            
-            //          DEBE
-            xmlBase += `<DETAIL>`;
-            xmlBase += `<CMPY_CODE>`+ '03' +`</CMPY_CODE>`;
-            xmlBase += `<SEQ_NUM>`+ 1 +`</SEQ_NUM>`;
-            xmlBase += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
-            xmlBase += `<ANALYSIS_TEXT>`+ '' +`</ANALYSIS_TEXT>`;
-            xmlBase += `<TRAN_DATE>`+ pago.fecha +`</TRAN_DATE>`;
-            xmlBase += `<REF_TEXT>`+ cust_code +`</REF_TEXT>`;
-            xmlBase += `<REF_NUM>`+ 0 +`</REF_NUM>`;
-            xmlBase += `<ACCT_CODE>`+ '11301004-000' +`</ACCT_CODE>`;
-            xmlBase += `<DEBIT_AMT>`+ monto +`</DEBIT_AMT>`;
-            xmlBase += `<CREDIT_AMT>`+ 0 +`</CREDIT_AMT>`;
-            xmlBase += `<DEBIT_AMT1>`+ 0 +`</DEBIT_AMT1>`;
-            xmlBase += `<CREDIT_AMT1>`+ 0 +`</CREDIT_AMT1>`;
-            xmlBase += `<DEBIT_AMT2>`+ 0 +`</DEBIT_AMT2>`;
-            xmlBase += `<CREDIT_AMT2>`+ 0 +`</CREDIT_AMT2>`;
-            xmlBase += `<REF_TEXT1>`+ pago.n_carpeta +`</REF_TEXT1>`;
-            xmlBase += `<REF_TEXT2>`+ cust_code +`</REF_TEXT2>`;
-            xmlBase += `<DESC_TEXT>`+ 'CUENTA CORRIENTE WSCARGO' +`</DESC_TEXT>`;
-            xmlBase += `<BRAN_CODE>`+ '' +`</BRAN_CODE>`;
-            xmlBase += `<PROFIT_CODE>`+ '' +`</PROFIT_CODE>`;
-            xmlBase += `<CURRENCY_CODE>`+ 'CLP' +`</CURRENCY_CODE>`;
-            xmlBase += `<RATE_EXCHANGE>`+ 1 +`</RATE_EXCHANGE>`;
-            xmlBase += `<DEBIT_AMT3>`+ 0 +`</DEBIT_AMT3>`;
-            xmlBase += `<CREDIT_AMT3>`+ 0 +`</CREDIT_AMT3>`;
-            xmlBase += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
-            xmlBase += `</DETAIL>`;
-
-            //          HABER
-            xmlBase += `<DETAIL>`;
-            xmlBase += `<CMPY_CODE>`+ '03' +`</CMPY_CODE>`;
-            xmlBase += `<SEQ_NUM>`+ 1 +`</SEQ_NUM>`;
-            xmlBase += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
-            xmlBase += `<ANALYSIS_TEXT>`+ '' +`</ANALYSIS_TEXT>`;
-            xmlBase += `<TRAN_DATE>`+ pago.fecha +`</TRAN_DATE>`;
-            xmlBase += `<REF_TEXT>`+ cust_code +`</REF_TEXT>`;
-            xmlBase += `<REF_NUM>`+ 0 +`</REF_NUM>`;
-            xmlBase += `<ACCT_CODE>`+ '11301001-000' +`</ACCT_CODE>`;
-            xmlBase += `<DEBIT_AMT>`+ 0 +`</DEBIT_AMT>`;
-            xmlBase += `<CREDIT_AMT>`+ monto +`</CREDIT_AMT>`;
-            xmlBase += `<DEBIT_AMT1>`+ 0 +`</DEBIT_AMT1>`;
-            xmlBase += `<CREDIT_AMT1>`+ 0 +`</CREDIT_AMT1>`;
-            xmlBase += `<DEBIT_AMT2>`+ 0 +`</DEBIT_AMT2>`;
-            xmlBase += `<CREDIT_AMT2>`+ 0 +`</CREDIT_AMT2>`;
-            xmlBase += `<REF_TEXT1>`+ pago.n_carpeta +`</REF_TEXT1>`;
-            xmlBase += `<REF_TEXT2>`+ concepto +`</REF_TEXT2>`;
-            xmlBase += `<DESC_TEXT>`+ 'CLIENTES NACIONALES ' +`</DESC_TEXT>`;
-            xmlBase += `<BRAN_CODE>`+ '' +`</BRAN_CODE>`;
-            xmlBase += `<PROFIT_CODE>`+ '' +`</PROFIT_CODE>`;
-            xmlBase += `<CURRENCY_CODE>`+ 'CLP' +`</CURRENCY_CODE>`;
-            xmlBase += `<RATE_EXCHANGE>`+ 1 +`</RATE_EXCHANGE>`;
-            xmlBase += `<DEBIT_AMT3>`+ 0 +`</DEBIT_AMT3>`;
-            xmlBase += `<CREDIT_AMT3>`+ 0 +`</CREDIT_AMT3>`;
-            xmlBase += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
-            xmlBase += `</DETAIL>`;  
-
-            xmlBase +=`</BATCH></string>`;
-
-            send_pago_maximise(xmlBase, -1)
-
-        }
-
-        async function send_pago_maximise(xml, fk_cabecera) {
-
-            console.log(xml);
-                    
-            const request = require('request');
-            const fs = require("fs");
-
-            const data = {
-                AliasName: 'dwi_tnm',
-                UserName: 'webservice',
-                Password: 'webservice001',
-                Data: xml
-            };
-
-            const options = {
-                url: 'http://asp3.maximise.cl/wsv/batch.asmx/SaveDocument',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/html',
-                    'Content-Length': data.length
-                },
-                json: true,
-                form: {
-                    AliasName: 'dwi_tnm',
-                    UserName: 'webservice',
-                    Password: 'webservice001',
-                    Data: xml
-                }
-            };
-
-            request.post(options, (err, res, body) => {
-
-                if(err) { 
-                    console.log('error, ' + err);
-                }
-                else if(body) {   
-                    console.log(" RESPUESTA ");
-                    if(res.statusCode!=200 ){
-                        
-                        console.log("ERROR "); 
-                        console.log(JSON.stringify(res.body));
-
-                    } else if(res.statusCode==200 ) {
-
-                        console.log("\n\nSUCCESS "); 
-                        console.log("\n\n"+JSON.stringify(res.body));
-                        var RespMax = JSON.stringify(res.body);
-                        var IdMax = RespMax.match(/<int xmlns=\"Maximise\">([^<]*)<\/int>/);
-                        console.log('\n\nId Maximise '+IdMax);
-                        if (fk_cabecera != -1) 
-                        {
-                            actualizar_estado_bd('MAXIMISE', fk_cabecera, IdMax)
-                        }
-                    } 
-                }
-            });
-                                
-        }
-
-        async function actualizar_estado_bd(estado, fk_cabecera, IdMax) {
-            
-            var moment = require('moment');
-            let fecha = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
-
-            var query = '';
-                query+=`estado='`+estado+`', `;
-                query+=`id_maximise='`+IdMax+`', `;
-                query+=`"fk_updatedBy"=`+carpeta_data.rows[0]["fk_createdBy"]+`, `;
-                query+=`"updatedAt"='`+fecha+`'`;
-
-            console.log(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
-            await client.query(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
-                
-            client.query(` UPDATE public.queue_maximise SET estado='${estado}' WHERE id=${tarea.id} `);
-            
-        }
-    }
-
-    async function enviar_pago_usd_maximise(tarea) { 
-        console.log('Envio de pago usd')
-        client.query(` UPDATE public.queue_maximise SET estado='PROCESANDO' WHERE id=${tarea.id} `);
-
-        var carpeta_data = await client.query(` SELECT id, fk_responsable, errores, estado, cmpy_code, year_num, period_num, jour_code, entry_code, debit_amt, credit_amt, post_flag, com_text, cleared_flag, control_amt, debit_amt1, credit_amt1, debit_amt2, credit_amt2, debit_amt3, credit_amt3, tran_type_ind, ledger_code, fk_despacho, fk_nota_cobro, carpeta, codigo_cliente, monto, descripcion_movimiento, saldo, fecha_ingreso, fecha_registro, "fk_createdBy", "fk_updatedBy", "createdAt", "updatedAt", codigo_bi_pago, conversion, razon_social, 
-                                                    to_char(entry_date, 'DD-MM-YYYY') as entry_date, 
-                                                    to_char(jour_date, 'DD-MM-YYYY') as jour_date, 
-                                                    to_char(fecha_movimiento, 'DD-MM-YYYY') as fecha_movimiento
-                                                FROM public.wsc_envio_asientos_cabeceras where id=${tarea['fk_cabecera']}`);
-
-        if(carpeta_data.rows.length>0) {
-
-            let cmpy_code = carpeta_data.rows[0].cmpy_code;
-            let year_num = carpeta_data.rows[0].year_num;
-            let period_num = carpeta_data.rows[0].period_num;
-            let jour_code = carpeta_data.rows[0].jour_code;
-            let entry_code = carpeta_data.rows[0].entry_code;
-            let entry_date = carpeta_data.rows[0].entry_date;
-            let jour_date = carpeta_data.rows[0].jour_date;
-            let debit_amt = carpeta_data.rows[0].debit_amt;
-            let credit_amt = carpeta_data.rows[0].credit_amt;
-            let post_flag = carpeta_data.rows[0].post_flag;
-            let com_text = carpeta_data.rows[0].com_text;
-            let cleared_flag = carpeta_data.rows[0].cleared_flag;
-            let control_amt = carpeta_data.rows[0].control_amt;
-            let debit_amt1 = carpeta_data.rows[0].debit_amt1;
-            let credit_amt1 = carpeta_data.rows[0].credit_amt1;
-            let debit_amt2 = carpeta_data.rows[0].debit_amt2;
-            let credit_amt2 = carpeta_data.rows[0].credit_amt2;
-            let tran_type_ind = carpeta_data.rows[0].tran_type_ind;
-            let ledger_code = carpeta_data.rows[0].ledger_code;
-            let debit_amt3 = carpeta_data.rows[0].debit_amt3;
-            let credit_amt3 = carpeta_data.rows[0].credit_amt3;
-            let rate_exchange = carpeta_data.rows[0].conversion;
-            let razon_social = carpeta_data.rows[0].razon_social;
-
-            let carpeta = carpeta_data.rows[0].carpeta;
-            let monto = carpeta_data.rows[0].monto;
-            let codigo_cliente = carpeta_data.rows[0].codigo_cliente;
-            let fecha_movimiento = carpeta_data.rows[0].fecha_movimiento;
-
-            var xmltext_aux = `<string xmlns="Maximise"><BATCH><HEAD>`;
-            xmltext_aux += `<CMPY_CODE>`+ cmpy_code +`</CMPY_CODE>`;
-            xmltext_aux += `<YEAR_NUM>`+ year_num +`</YEAR_NUM>`;
-            xmltext_aux += `<PERIOD_NUM>`+ period_num +`</PERIOD_NUM>`;
-            xmltext_aux += `<JOUR_CODE>`+ jour_code +`</JOUR_CODE>`;
-            xmltext_aux += `<ENTRY_CODE>`+ entry_code +`</ENTRY_CODE>`;
-            xmltext_aux += `<ENTRY_DATE>`+ entry_date +`</ENTRY_DATE>`;
-            xmltext_aux += `<JOUR_DATE>`+ jour_date +`</JOUR_DATE>`;
-            xmltext_aux += `<DEBIT_AMT>`+ debit_amt +`</DEBIT_AMT>`;
-            xmltext_aux += `<CREDIT_AMT>`+ credit_amt +`</CREDIT_AMT>`;
-            xmltext_aux += `<POST_FLAG>`+ post_flag +`</POST_FLAG>`;
-            xmltext_aux += `<COM_TEXT>`+ com_text +`</COM_TEXT>`;
-            xmltext_aux += `<CLEARED_FLAG>`+ cleared_flag +`</CLEARED_FLAG>`;
-            xmltext_aux += `<CONTROL_AMT>`+ control_amt +`</CONTROL_AMT>`;
-            xmltext_aux += `<DEBIT_AMT1>`+ debit_amt1 +`</DEBIT_AMT1>`;
-            xmltext_aux += `<CREDIT_AMT1>`+ credit_amt1 +`</CREDIT_AMT1>`;
-            xmltext_aux += `<DEBIT_AMT2>`+ debit_amt2 +`</DEBIT_AMT2>`;
-            xmltext_aux += `<CREDIT_AMT2>`+ credit_amt2 +`</CREDIT_AMT2>`;
-            xmltext_aux += `<TRAN_TYPE_IND>`+ tran_type_ind +`</TRAN_TYPE_IND>`;
-            xmltext_aux += `<LEDGER_CODE>`+ ledger_code +`</LEDGER_CODE>`;
-            xmltext_aux += `<DEBIT_AMT3>`+ debit_amt3 +`</DEBIT_AMT3>`;
-            xmltext_aux += `<CREDIT_AMT3>`+ credit_amt3 +`</CREDIT_AMT3>`;
-            xmltext_aux += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
-            xmltext_aux += `<RATE_EXCHANGE >`+ rate_exchange +`</RATE_EXCHANGE >`;
-            xmltext_aux += `</HEAD>`;
-
-            let pago = {
-                n_carpeta: carpeta,
-                monto: monto,
-                cliente: codigo_cliente,
-                fecha: fecha_movimiento,
-                conversion: rate_exchange
-            }
-
-            consultar_carpeta_maximise(tarea['fk_cabecera'], pago, xmltext_aux, razon_social);
-        
-        } 
-
-        async function consultar_carpeta_maximise(fk_cabecera, pago, xmltext_aux, razon_social) {
     
-            const request = require('request');
-            const fs = require("fs");
-    
-            const xmltext = `SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num, 
-                            (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND (CMPY_CODE='02' OR CMPY_CODE='03' OR CMPY_CODE='04')) as total_credito
-                            FROM invoicehead ih
-                            WHERE ih.cmpy_code='04' and 
-                            ih.POSTED_FLAG<>'V' and 
-                            ih.ref_text1='${pago.n_carpeta}' 
-                            ORDER BY ih.doc_code asc;`;
-    
-            const data = {
-                AliasName: 'dwi_tnm',
-                UserName: 'webservice',
-                Password: 'webservice001',
-                Sql: xmltext
-            };
-    
-            const options = {
-                url: 'http://asp3.maximise.cl/wsv/query.asmx/GetQueryAsDataSet',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/html',
-                    'Content-Length': data.length
-                },
-                json: true,
-                form: {
-                    AliasName: 'dwi_tnm',
-                    UserName: 'webservice',
-                    Password: 'webservice001',
-                    Sql: xmltext
-                }
-            };
-    
-            try {
-    
-                request.post(options, async(err, res, body) => {
-    
-                    if(err) 
-                    { 
-                        console.log(err);
-                    }
-                    else if(body) 
-                    {   
-                        console.log(" RESPONSE GET INVOICEHEAD ");
-                        if(res.statusCode!=200){
-    
-                            console.log("ERROR");
-                            console.log(JSON.stringify(res.body));
-    
-                        }
-                        else if(res.statusCode==200 )
-                        {
-                            var documentos = [];
-                            var payment = Number(pago.monto) * Number(pago.conversion);
-    
-                            var entries = JSON.stringify(body).split('<Table');
-    
-                            let resp_cust_code = '';
-                            let nota_debito = 0;
-    
-                            //GUARDO DOCUMENTOS EN ARRAY DE OBJETOS
-                            for(var j=1; j<entries.length; j++) {
-                                let resp_inv_num = entries[j].split('<INV_NUM>').pop().split('</INV_NUM>')[0];
-                                let resp_doc_code = entries[j].split('<doc_code>').pop().split('</doc_code>')[0];
-                                resp_cust_code = entries[j].split('<cust_code>').pop().split('</cust_code>')[0];
-                                let resp_paid_amt = entries[j].split('<PAID_AMT>').pop().split('</PAID_AMT>')[0];
-                                let resp_total_amt = entries[j].split('<TOTAL_AMT>').pop().split('</TOTAL_AMT>')[0];
-                                let resp_ref_text1 = entries[j].split('<REF_TEXT1>').pop().split('</REF_TEXT1>')[0];
-                                let resp_ref_text2 = entries[j].split('<REF_TEXT2>').pop().split('</REF_TEXT2>')[0];
-                                let resp_ext_num = entries[j].split('<ext_num>').pop().split('</ext_num>')[0];
-                                let resp_total_credito = entries[j].split('<total_credito>').pop().split('</total_credito>')[0];
-                                let resp_cred_num = entries[j].split('<cred_num>').pop().split('</cred_num>')[0];
-    
-                                let resp_por_pagar = Number(resp_total_amt) - Number(resp_paid_amt);
-    
-                                try {
-                                    if (Number(resp_total_credito) > 0) {
-                                        resp_por_pagar -= Number(resp_total_credito)
-                                    }
-                                } catch {
-    
-                                }
-    
-                                if (resp_doc_code == 'F8') {
-                                    resp_por_pagar += nota_debito;
-                                }
-    
-                                if (resp_doc_code == 'D1'){
-                                    nota_debito = Number(resp_total_amt)
-    
-                                } else if (resp_doc_code != 'P8' && resp_por_pagar > 10) {
-                                    documentos.push({
-                                        resp_inv_num: resp_inv_num,
-                                        resp_doc_code: resp_doc_code,
-                                        resp_paid_amt: resp_paid_amt,
-                                        resp_total_amt: resp_total_amt,
-                                        resp_por_pagar: resp_por_pagar,
-                                        resp_ref_text1: resp_ref_text1,
-                                        resp_ref_text2: resp_ref_text2,
-                                        resp_ext_num: resp_ext_num
-                                    })
-                                }
-                            }
-                            console.log(documentos);
-    
-                            if (documentos.length == 0) {
-                                //DINERO SE IRA A EXCEDENTE, PERO HAY CAMPOS QUE DEBO CONSULTAR DESDE OTRA FUENTE
-                                resp_cust_code = await get_cliente_rut(pago.cliente.split(' ')[0]);
-                                if (resp_cust_code == false) {
-                                    return false;
-                                }
-                            }
-    
-                            // BANCO BANCO BANCO BANCO BANCO BANCO BANCO BANCO BANCO
-    
-                            var auto_num = 1;
-    
-                            let bco_fk_cabecera = fk_cabecera;
-                            let bco_seq_num = auto_num;
-                            let bco_analysis_text = '';
-                            let bco_tran_date = pago.fecha;
-                            let bco_ref_text = resp_cust_code;
-                            let bco_ref_num = 0;
-                            let bco_debit_amt = payment;
-                            let bco_credit_amt = 0;
-                            let bco_debit_amt1 = payment/Number(pago.conversion);
-                            let bco_credit_amt1 = 0;
-                            let bco_debit_amt2 = 0;
-                            let bco_credit_amt2 = 0;
-                            let bco_debit_amt3 = 0;
-                            let bco_credit_amt3 = 0;
-                            let bco_ref_text1 = pago.n_carpeta;
-                            let bco_bran_code = '';
-                            let bco_profit_code = '';
-                            let bco_currency_code = 'USD';
-                            let bco_rate_exchange = 1;
-    
-                            let bco_acct_code = '11103002-000';
-                            let bco_ref_text2 = resp_cust_code;
-                            let bco_desc_text = 'BANCO SANTANDER';
-    
-                            columna = '';                           valor = '';
-                            columna+=`"fk_cabecera",`;              valor+=`'`+ bco_fk_cabecera +`',`;
-                            columna+=`"seq_num",`;                  valor+=`'`+ bco_seq_num +`',`;
-                            columna+=`"analysis_text",`;            valor+=`'`+ bco_analysis_text +`',`;
-                            columna+=`"tran_date",`;                valor+=`'`+ bco_tran_date +`',`;
-                            columna+=`"ref_text",`;                 valor+=`'`+ bco_ref_text +`',`;
-                            columna+=`"ref_num",`;                  valor+=`'`+ bco_ref_num +`',`;
-                            columna+=`"debit_amt",`;                valor+=`'`+ bco_debit_amt +`',`;
-                            columna+=`"credit_amt",`;               valor+=`'`+ bco_credit_amt +`',`;
-                            columna+=`"debit_amt1",`;               valor+=`'`+ bco_debit_amt1 +`',`;
-                            columna+=`"credit_amt1",`;              valor+=`'`+ bco_credit_amt1 +`',`;
-                            columna+=`"debit_amt2",`;               valor+=`'`+ bco_debit_amt2 +`',`;
-                            columna+=`"credit_amt2",`;              valor+=`'`+ bco_credit_amt2 +`',`;
-                            columna+=`"debit_amt3",`;               valor+=`'`+ bco_debit_amt3 +`',`;
-                            columna+=`"credit_amt3",`;              valor+=`'`+ bco_credit_amt3 +`',`;
-                            columna+=`"ref_text1",`;                valor+=`'`+ bco_ref_text1 +`',`;
-                            columna+=`"bran_code",`;                valor+=`'`+ bco_bran_code +`',`;
-                            columna+=`"profit_code",`;              valor+=`'`+ bco_profit_code +`',`;
-                            columna+=`"currency_code",`;            valor+=`'`+ bco_currency_code +`',`;
-                            columna+=`"rate_exchange",`;            valor+=`'`+ bco_rate_exchange +`',`;
-                            columna+=`"acct_code",`;                valor+=`'`+ bco_acct_code +`',`;
-                            columna+=`"ref_text2",`;                valor+=`'`+ bco_ref_text2 +`',`;
-                            columna+=`"desc_text"`;                 valor+=`'`+ bco_desc_text +`'`;
-    
-                            save_detalle(columna, valor);
-                            /** XML DETALLE BANCO  **/
-                            xmltext_aux += `<DETAIL>`;
-                            xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
-                            xmltext_aux += `<SEQ_NUM>`+ bco_seq_num +`</SEQ_NUM>`;
-                            xmltext_aux += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
-                            xmltext_aux += `<ANALYSIS_TEXT>`+ bco_analysis_text +`</ANALYSIS_TEXT>`;
-                            xmltext_aux += `<TRAN_DATE>`+ bco_tran_date +`</TRAN_DATE>`;
-                            xmltext_aux += `<REF_TEXT>`+ bco_ref_text +`</REF_TEXT>`;
-                            xmltext_aux += `<REF_NUM>`+ bco_ref_num +`</REF_NUM>`;
-                            xmltext_aux += `<ACCT_CODE>`+ bco_acct_code +`</ACCT_CODE>`;
-                            xmltext_aux += `<DEBIT_AMT>`+ bco_debit_amt +`</DEBIT_AMT>`;
-                            xmltext_aux += `<CREDIT_AMT>`+ bco_credit_amt +`</CREDIT_AMT>`;
-                            xmltext_aux += `<DEBIT_AMT1>`+ bco_debit_amt1 +`</DEBIT_AMT1>`;
-                            xmltext_aux += `<CREDIT_AMT1>`+ bco_credit_amt1 +`</CREDIT_AMT1>`;
-                            xmltext_aux += `<DEBIT_AMT2>`+ bco_debit_amt2 +`</DEBIT_AMT2>`;
-                            xmltext_aux += `<CREDIT_AMT2>`+ bco_credit_amt2 +`</CREDIT_AMT2>`;
-                            xmltext_aux += `<REF_TEXT1>`+ bco_ref_text1 +`</REF_TEXT1>`;
-                            xmltext_aux += `<REF_TEXT2>`+ bco_ref_text2 +`</REF_TEXT2>`;
-                            xmltext_aux += `<DESC_TEXT>`+ bco_desc_text +`</DESC_TEXT>`;
-                            xmltext_aux += `<BRAN_CODE>`+ bco_bran_code +`</BRAN_CODE>`;
-                            xmltext_aux += `<PROFIT_CODE>`+ bco_profit_code +`</PROFIT_CODE>`;
-                            xmltext_aux += `<CURRENCY_CODE>`+ bco_currency_code +`</CURRENCY_CODE>`;
-                            xmltext_aux += `<RATE_EXCHANGE>`+ bco_rate_exchange +`</RATE_EXCHANGE>`;
-                            xmltext_aux += `<DEBIT_AMT3>`+ bco_debit_amt3 +`</DEBIT_AMT3>`;
-                            xmltext_aux += `<CREDIT_AMT3>`+ bco_credit_amt3 +`</CREDIT_AMT3>`;
-                            xmltext_aux += `<JOUR_CODE >`+ 'IPC' +`</JOUR_CODE >`;
-    
-                            xmltext_aux += `</DETAIL>`;
-    
-                            auto_num++;
-                            // DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO
-                            for (let i=0; i<documentos.length; i++) {
-    
-                                console.log(documentos[i].resp_inv_num);
-    
-                                var curr_pay = 0;
-                                if(payment - documentos[i].resp_por_pagar >= 0) {
-                                    curr_pay = documentos[i].resp_por_pagar;
-                                    payment -= documentos[i].resp_por_pagar;
-                                } else {
-                                    curr_pay = payment;
-                                    payment = 0;
-                                }
-    
-                                let doc_fk_cabecera = fk_cabecera;
-                                let doc_seq_num = auto_num;
-                                let doc_analysis_text = resp_cust_code;
-                                let doc_tran_date = pago.fecha;
-                                let doc_ref_text = resp_cust_code;
-                                let doc_ref_num = (documentos[i].resp_inv_num==''||documentos[i].resp_inv_num==null||documentos[i].resp_inv_num==undefined)?0:documentos[i].resp_inv_num;
-                                let doc_debit_amt = 0;
-                                let doc_credit_amt = curr_pay;
-                                let doc_debit_amt1 = 0;
-                                let doc_credit_amt1 = curr_pay/Number(pago.conversion);
-                                let doc_debit_amt2 = 0;
-                                let doc_credit_amt2 = 0;
-                                let doc_debit_amt3 = 0;
-                                let doc_credit_amt3 = 0;
-                                let doc_ref_text1 = pago.n_carpeta;
-                                let doc_bran_code = '1';
-                                let doc_profit_code = 'CM';
-                                let doc_currency_code = 'USD';
-                                let doc_rate_exchange = 1;
-                                let doc_desc_text = razon_social.replace('&', '');
-    
-                                let doc_acct_code = '11301001-001';
-                                let doc_ref_text2 = 'PAGO DIN WSC';
-    
-                                if (documentos[i].resp_doc_code != 'DI') {
-                                    doc_acct_code = '11301001-000';
-                                    doc_ref_text2 = 'PAGO FACT';
-                                } 
-    
-                                columna = '';                           valor = '';
-                                columna+=`"fk_cabecera",`;              valor+=`'`+ doc_fk_cabecera +`',`;
-                                columna+=`"seq_num",`;                  valor+=`'`+ doc_seq_num +`',`;
-                                columna+=`"analysis_text",`;            valor+=`'`+ doc_analysis_text +`',`;
-                                columna+=`"tran_date",`;                valor+=`'`+ doc_tran_date +`',`;
-                                columna+=`"ref_text",`;                 valor+=`'`+ doc_ref_text +`',`;
-                                columna+=`"ref_num",`;                  valor+=`'`+ doc_ref_num +`',`;
-                                columna+=`"debit_amt",`;                valor+=`'`+ doc_debit_amt +`',`;
-                                columna+=`"credit_amt",`;               valor+=`'`+ doc_credit_amt +`',`;
-                                columna+=`"debit_amt1",`;               valor+=`'`+ doc_debit_amt1 +`',`;
-                                columna+=`"credit_amt1",`;              valor+=`'`+ doc_credit_amt1 +`',`;
-                                columna+=`"debit_amt2",`;               valor+=`'`+ doc_debit_amt2 +`',`;
-                                columna+=`"credit_amt2",`;              valor+=`'`+ doc_credit_amt2 +`',`;
-                                columna+=`"debit_amt3",`;               valor+=`'`+ doc_debit_amt3 +`',`;
-                                columna+=`"credit_amt3",`;              valor+=`'`+ doc_credit_amt3 +`',`;
-                                columna+=`"ref_text1",`;                valor+=`'`+ doc_ref_text1 +`',`;
-                                columna+=`"bran_code",`;                valor+=`'`+ doc_bran_code +`',`;
-                                columna+=`"profit_code",`;              valor+=`'`+ doc_profit_code +`',`;
-                                columna+=`"currency_code",`;            valor+=`'`+ doc_currency_code +`',`;
-                                columna+=`"rate_exchange",`;            valor+=`'`+ doc_rate_exchange +`',`;
-                                columna+=`"acct_code",`;                valor+=`'`+ doc_acct_code +`',`;
-                                columna+=`"ref_text2",`;                valor+=`'`+ doc_ref_text2 +`',`;
-                                columna+=`"desc_text"`;                 valor+=`'`+ doc_desc_text +`'`;
-    
-                                save_detalle(columna, valor);
-                                /** XML DETALLE DOCUMENTO **/
-                                xmltext_aux += `<DETAIL>`;
-                                xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
-                                xmltext_aux += `<SEQ_NUM>`+ doc_seq_num +`</SEQ_NUM>`;
-                                xmltext_aux += `<TRAN_TYPE_IND>`+ 'CPA' +`</TRAN_TYPE_IND>`;
-                                xmltext_aux += `<ANALYSIS_TEXT>`+ doc_analysis_text +`</ANALYSIS_TEXT>`;
-                                xmltext_aux += `<TRAN_DATE>`+ doc_tran_date +`</TRAN_DATE>`;
-                                xmltext_aux += `<REF_TEXT>`+ doc_ref_text +`</REF_TEXT>`;
-                                xmltext_aux += `<REF_NUM>`+ doc_ref_num +`</REF_NUM>`;
-                                xmltext_aux += `<ACCT_CODE>`+ doc_acct_code +`</ACCT_CODE>`;
-                                xmltext_aux += `<DEBIT_AMT>`+ doc_debit_amt +`</DEBIT_AMT>`;
-                                xmltext_aux += `<CREDIT_AMT>`+ doc_credit_amt +`</CREDIT_AMT>`;
-                                xmltext_aux += `<DEBIT_AMT1>`+ doc_debit_amt1 +`</DEBIT_AMT1>`;
-                                xmltext_aux += `<CREDIT_AMT1>`+ doc_credit_amt1 +`</CREDIT_AMT1>`;
-                                xmltext_aux += `<DEBIT_AMT2>`+ doc_debit_amt2 +`</DEBIT_AMT2>`;
-                                xmltext_aux += `<CREDIT_AMT2>`+ doc_credit_amt2 +`</CREDIT_AMT2>`;
-                                xmltext_aux += `<REF_TEXT1>`+ doc_ref_text1 +`</REF_TEXT1>`;
-                                xmltext_aux += `<REF_TEXT2>`+ doc_ref_text2 +`</REF_TEXT2>`;
-                                xmltext_aux += `<DESC_TEXT>`+ doc_desc_text +`</DESC_TEXT>`;
-                                xmltext_aux += `<BRAN_CODE>`+ doc_bran_code +`</BRAN_CODE>`;
-                                xmltext_aux += `<PROFIT_CODE>`+ doc_profit_code +`</PROFIT_CODE>`;
-                                xmltext_aux += `<CURRENCY_CODE>`+ doc_currency_code +`</CURRENCY_CODE>`;
-                                xmltext_aux += `<RATE_EXCHANGE>`+ doc_rate_exchange +`</RATE_EXCHANGE>`;
-                                xmltext_aux += `<DEBIT_AMT3>`+ doc_debit_amt3 +`</DEBIT_AMT3>`;
-                                xmltext_aux += `<CREDIT_AMT3>`+ doc_credit_amt3 +`</CREDIT_AMT3>`;
-                                xmltext_aux += `<REF_AMT>`+ doc_credit_amt +`</REF_AMT>`;
-                                xmltext_aux += `<JOUR_CODE >`+ 'IPC' +`</JOUR_CODE >`;
-    
-                                xmltext_aux += `</DETAIL>`;
-    
-                                if (payment == 0) {
-                                    break;
-                                }
-                                auto_num++;
-                            }
-    
-                            if (payment > 0) {//SOBRO DINERO, SE AGREGA A AJUSTE
-    
-                                let aju_fk_cabecera = fk_cabecera;
-                                let aju_seq_num = auto_num;
-                                let aju_analysis_text = resp_cust_code;
-                                let aju_tran_date = pago.fecha;
-                                let aju_ref_text = resp_cust_code;
-                                let aju_ref_num = 0;
-                                let aju_debit_amt = 0;
-                                let aju_credit_amt = payment;
-                                let aju_debit_amt1 = 0;
-                                let aju_credit_amt1 = payment/Number(pago.conversion);
-                                let aju_debit_amt2 = 0;
-                                let aju_credit_amt2 = 0;
-                                let aju_debit_amt3 = 0;
-                                let aju_credit_amt3 = 0;
-                                let aju_ref_text1 = pago.n_carpeta;
-                                let aju_bran_code = '';
-                                let aju_profit_code = '';
-                                let aju_currency_code = 'USD';
-                                let aju_rate_exchange = 1;
-        
-                                let aju_acct_code = '21102001-000';
-                                let aju_ref_text2 = 'EXCEDENTE CLIENTE';
-                                let aju_desc_text = razon_social.replace('&', '');
-        
-                                columna = '';                           valor = '';
-                                columna+=`"fk_cabecera",`;              valor+=`'`+ aju_fk_cabecera +`',`;
-                                columna+=`"seq_num",`;                  valor+=`'`+ aju_seq_num +`',`;
-                                columna+=`"analysis_text",`;            valor+=`'`+ aju_analysis_text +`',`;
-                                columna+=`"tran_date",`;                valor+=`'`+ aju_tran_date +`',`;
-                                columna+=`"ref_text",`;                 valor+=`'`+ aju_ref_text +`',`;
-                                columna+=`"ref_num",`;                  valor+=`'`+ aju_ref_num +`',`;
-                                columna+=`"debit_amt",`;                valor+=`'`+ aju_debit_amt +`',`;
-                                columna+=`"credit_amt",`;               valor+=`'`+ aju_credit_amt +`',`;
-                                columna+=`"debit_amt1",`;               valor+=`'`+ aju_debit_amt1 +`',`;
-                                columna+=`"credit_amt1",`;              valor+=`'`+ aju_credit_amt1 +`',`;
-                                columna+=`"debit_amt2",`;               valor+=`'`+ aju_debit_amt2 +`',`;
-                                columna+=`"credit_amt2",`;              valor+=`'`+ aju_credit_amt2 +`',`;
-                                columna+=`"debit_amt3",`;               valor+=`'`+ aju_debit_amt3 +`',`;
-                                columna+=`"credit_amt3",`;              valor+=`'`+ aju_credit_amt3 +`',`;
-                                columna+=`"ref_text1",`;                valor+=`'`+ aju_ref_text1 +`',`;
-                                columna+=`"bran_code",`;                valor+=`'`+ aju_bran_code +`',`;
-                                columna+=`"profit_code",`;              valor+=`'`+ aju_profit_code +`',`;
-                                columna+=`"currency_code",`;            valor+=`'`+ aju_currency_code +`',`;
-                                columna+=`"rate_exchange",`;            valor+=`'`+ aju_rate_exchange +`',`;
-                                columna+=`"acct_code",`;                valor+=`'`+ aju_acct_code +`',`;
-                                columna+=`"ref_text2",`;                valor+=`'`+ aju_ref_text2 +`',`;
-                                columna+=`"desc_text"`;                 valor+=`'`+ aju_desc_text +`'`;
-        
-                                save_detalle(columna, valor);
-                                /** XML DETALLE BANCO  **/
-                                xmltext_aux += `<DETAIL>`;
-                                xmltext_aux += `<CMPY_CODE>`+ '04' +`</CMPY_CODE>`;
-                                xmltext_aux += `<SEQ_NUM>`+ aju_seq_num +`</SEQ_NUM>`;
-                                xmltext_aux += `<TRAN_TYPE_IND>`+ 'AJU' +`</TRAN_TYPE_IND>`;
-                                xmltext_aux += `<ANALYSIS_TEXT>`+ aju_analysis_text +`</ANALYSIS_TEXT>`;
-                                xmltext_aux += `<TRAN_DATE>`+ aju_tran_date +`</TRAN_DATE>`;
-                                xmltext_aux += `<REF_TEXT>`+ aju_ref_text +`</REF_TEXT>`;
-                                xmltext_aux += `<REF_NUM>`+ aju_ref_num +`</REF_NUM>`;
-                                xmltext_aux += `<ACCT_CODE>`+ aju_acct_code +`</ACCT_CODE>`;
-                                xmltext_aux += `<DEBIT_AMT>`+ aju_debit_amt +`</DEBIT_AMT>`;
-                                xmltext_aux += `<CREDIT_AMT>`+ aju_credit_amt +`</CREDIT_AMT>`;
-                                xmltext_aux += `<DEBIT_AMT1>`+ aju_debit_amt1 +`</DEBIT_AMT1>`;
-                                xmltext_aux += `<CREDIT_AMT1>`+ aju_credit_amt1 +`</CREDIT_AMT1>`;
-                                xmltext_aux += `<DEBIT_AMT2>`+ aju_debit_amt2 +`</DEBIT_AMT2>`;
-                                xmltext_aux += `<CREDIT_AMT2>`+ aju_credit_amt2 +`</CREDIT_AMT2>`;
-                                xmltext_aux += `<REF_TEXT1>`+ aju_ref_text1 +`</REF_TEXT1>`;
-                                xmltext_aux += `<REF_TEXT2>`+ aju_ref_text2 +`</REF_TEXT2>`;
-                                xmltext_aux += `<DESC_TEXT>`+ aju_desc_text +`</DESC_TEXT>`;
-                                xmltext_aux += `<BRAN_CODE>`+ aju_bran_code +`</BRAN_CODE>`;
-                                xmltext_aux += `<PROFIT_CODE>`+ aju_profit_code +`</PROFIT_CODE>`;
-                                xmltext_aux += `<CURRENCY_CODE>`+ aju_currency_code +`</CURRENCY_CODE>`;
-                                xmltext_aux += `<RATE_EXCHANGE>`+ aju_rate_exchange +`</RATE_EXCHANGE>`;
-                                xmltext_aux += `<DEBIT_AMT3>`+ aju_debit_amt3 +`</DEBIT_AMT3>`;
-                                xmltext_aux += `<CREDIT_AMT3>`+ aju_credit_amt3 +`</CREDIT_AMT3>`;
-                                xmltext_aux += `<REF_AMT>`+ aju_credit_amt +`</REF_AMT>`;
-                                xmltext_aux += `<JOUR_CODE >`+ 'IPC' +`</JOUR_CODE >`;
-    
-                                xmltext_aux += `</DETAIL>`;
-                            }
-    
-                            xmltext_aux +=`</BATCH></string>`;
-                            send_pago_maximise(xmltext_aux, fk_cabecera)
-    
-                        }
-                    }
-                });
-            } catch (error) {
-                return false
-    
-            }
-        }
-    
-        async function get_cliente_rut(fk_cliente) {
-                    
-            var rut_cliente = await client.query(`SELECT rut FROM public.clientes WHERE id='${fk_cliente}'`); 
-            if (rut_cliente.rows.length > 0) {
-                return rut_cliente.rows[0]['rut'].replace('.', '').replace('.', '');
-            } else {
-                return false
-            }
-                                
-        }
-    
-        async function save_detalle(columna, valor) {
-            
-            console.log(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
-            var insert = await client.query(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
-                                
-        }
-    
-        async function send_pago_maximise(xml, fk_cabecera) {
-    
-            console.log(xml);
-                    
-            const request = require('request');
-            const fs = require("fs");
-    
-            const data = {
-                AliasName: 'dwi_tnm',
-                UserName: 'webservice',
-                Password: 'webservice001',
-                Data: xml
-            };
-    
-            const options = {
-                url: 'http://asp3.maximise.cl/wsv/batch.asmx/SaveDocument',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/html',
-                    'Content-Length': data.length
-                },
-                json: true,
-                form: {
-                    AliasName: 'dwi_tnm',
-                    UserName: 'webservice',
-                    Password: 'webservice001',
-                    Data: xml
-                }
-            };
-    
-    
-            request.post(options, (err, res, body) => {
-
-                if(err) { 
-                    console.log('error, ' + err);
-                }
-                else if(body) {   
-                    console.log(" RESPUESTA ");
-                    if(res.statusCode!=200 ){
-                        
-                        console.log("ERROR "); 
-                        console.log(JSON.stringify(res.body));
-
-                    } else if(res.statusCode==200 ) {
-
-                        console.log("\n\nSUCCESS "); 
-                        console.log("\n\n"+JSON.stringify(res.body));
-                        var RespMax = JSON.stringify(res.body);
-                        var IdMax = RespMax.match(/<int xmlns=\"Maximise\">([^<]*)<\/int>/);
-                        console.log('\n\nId Maximise '+IdMax);
-
-                        actualizar_estado_bd('MAXIMISE', fk_cabecera, IdMax)
-                    } 
-                }
-            });
-    
-                                
-        }
-    
-        async function actualizar_estado_bd(estado, fk_cabecera, IdMax) {
-            
-            var moment = require('moment');
-            let fecha = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
-    
-            var query = '';
-                query+=`estado='`+estado+`', `;
-                query+=`id_maximise='`+IdMax+`', `;
-                query+=`"fk_updatedBy"=`+carpeta_data.rows[0]["fk_createdBy"]+`, `;
-                query+=`"updatedAt"='`+fecha+`'`;
-    
-            console.log(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
-            await client.query(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
-
-            client.query(` UPDATE public.queue_maximise SET estado='${estado}' WHERE id=${tarea.id} `);
-                                
-        }
-    }
 }
 
 
