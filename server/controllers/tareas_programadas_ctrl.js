@@ -7,7 +7,7 @@ const fs = require('fs');
 const { verify } = require('crypto');
 const path = require('path');
 const Notifications= require('../../handlers/notifications');
-const emailHandler = require('../../apis/emailHandler'); 
+const emailHandler = require('../../apis/emailHandler');
 const funcionesCompartidasCtrl = require('./funcionesCompartidasCtrl.js');
 
 
@@ -25,7 +25,7 @@ exports.orquestador_server_2 = async (req, resp) => {
 
     });
 
-    async function orquestador_server_2() { 
+    async function orquestador_server_2() {
         var tarea = await client.query(` SELECT * FROM public.queue_maximise WHERE estado='PENDIENTE' ORDER BY id ASC limit 1`);
         console.log("$$$$$$");
         if(tarea.rows.length > 0) {
@@ -43,15 +43,15 @@ exports.orquestador_server_2 = async (req, resp) => {
         }
     }
 
-    async function enviar_pago_maximise(tarea) { 
+    async function enviar_pago_maximise(tarea) {
         console.log('Envio de pago')
         client.query(` UPDATE public.queue_maximise SET estado='PROCESANDO' WHERE id=${tarea.id} `);
 
-        var carpeta_data = await client.query(` SELECT id, fk_responsable, errores, estado, cmpy_code, year_num, period_num, jour_code, entry_code, debit_amt, credit_amt, post_flag, com_text, cleared_flag, control_amt, debit_amt1, credit_amt1, debit_amt2, credit_amt2, debit_amt3, credit_amt3, tran_type_ind, ledger_code, fk_despacho, fk_nota_cobro, carpeta, codigo_cliente, monto, descripcion_movimiento, saldo, fecha_ingreso, fecha_registro, "fk_createdBy", "fk_updatedBy", "createdAt", "updatedAt", codigo_bi_pago, conversion, razon_social, 
-                                                    to_char(entry_date, 'DD-MM-YYYY') as entry_date, 
-                                                    to_char(jour_date, 'DD-MM-YYYY') as jour_date, 
+        var carpeta_data = await client.query(` SELECT id, fk_responsable, errores, estado, cmpy_code, year_num, period_num, jour_code, entry_code, debit_amt, credit_amt, post_flag, com_text, cleared_flag, control_amt, debit_amt1, credit_amt1, debit_amt2, credit_amt2, debit_amt3, credit_amt3, tran_type_ind, ledger_code, fk_despacho, fk_nota_cobro, carpeta, codigo_cliente, monto, descripcion_movimiento, saldo, fecha_ingreso, fecha_registro, "fk_createdBy", "fk_updatedBy", "createdAt", "updatedAt", codigo_bi_pago, conversion, razon_social,
+                                                    to_char(entry_date, 'DD-MM-YYYY') as entry_date,
+                                                    to_char(jour_date, 'DD-MM-YYYY') as jour_date,
                                                     to_char(fecha_movimiento, 'DD-MM-YYYY') as fecha_movimiento
-                                                    FROM public.wsc_envio_asientos_cabeceras 
+                                                    FROM public.wsc_envio_asientos_cabeceras
                                                 where id=${tarea['fk_cabecera']}`);
 
         if(carpeta_data.rows.length>0) {
@@ -117,8 +117,8 @@ exports.orquestador_server_2 = async (req, resp) => {
             }
 
             consultar_carpeta_maximise(tarea['fk_cabecera'], pago, xmltext_aux, razon_social);
-        
-        }            
+
+        }
 
         async function consultar_carpeta_maximise(fk_cabecera, pago, xmltext_aux, razon_social) {
 
@@ -127,15 +127,15 @@ exports.orquestador_server_2 = async (req, resp) => {
 
             var xml_cws = xmltext_aux.split('CMPY_CODE')[0] + 'CMPY_CODE>03</CMPY_CODE' + xmltext_aux.split('CMPY_CODE')[2];
 
-            const xmltext = `SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num, 
+            const xmltext = `SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num,
                             (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND (CMPY_CODE='02' OR CMPY_CODE='03' OR CMPY_CODE='04')) as total_credito,
                             (SELECT SUM(TOTAL_AMT) - SUM(PAID_AMT) FROM invoicehead WHERE cmpy_code='03' AND ref_text1='${pago.n_carpeta}' AND ref_text2='PALLET' AND POSTED_FLAG<>'V') as pallet,
                             (SELECT SUM(TOTAL_AMT) - SUM(PAID_AMT) FROM invoicehead WHERE cmpy_code='03' AND ref_text1='${pago.n_carpeta}' AND ref_text2='TVP' AND POSTED_FLAG<>'V') as tvp,
                             (SELECT SUM(TOTAL_AMT) - SUM(PAID_AMT) FROM invoicehead WHERE cmpy_code='03' AND ref_text1='${pago.n_carpeta}' AND ref_text2='OTROS' AND POSTED_FLAG<>'V') as otros
                             FROM invoicehead ih
-                            WHERE ih.cmpy_code='04' and 
-                            ih.POSTED_FLAG<>'V' and 
-                            ih.ref_text1='${pago.n_carpeta}' 
+                            WHERE ih.cmpy_code='04' and
+                            ih.POSTED_FLAG<>'V' and
+                            ih.ref_text1='${pago.n_carpeta}'
                             ORDER BY ih.doc_code asc;`;
 
             const data = {
@@ -165,12 +165,12 @@ exports.orquestador_server_2 = async (req, resp) => {
 
                 request.post(options, async(err, res, body) => {
 
-                    if(err) 
-                    { 
+                    if(err)
+                    {
                         console.log('ERROR ' + pago.n_carpeta + ', ' + err);
                     }
-                    else if(body) 
-                    {   
+                    else if(body)
+                    {
                         if(res.statusCode!=200){
 
                             console.log('ERROR ' + pago.n_carpeta + ', ' + JSON.stringify(res.body));
@@ -390,7 +390,7 @@ exports.orquestador_server_2 = async (req, resp) => {
                                 if (documentos[i].resp_doc_code != 'DI') {
                                     doc_acct_code = '11301001-000';
                                     doc_ref_text2 = 'PAGO FACT';
-                                } 
+                                }
 
                                 if (documentos[i].resp_doc_code == 'PALLET' || documentos[i].resp_doc_code == 'TVP' || documentos[i].resp_doc_code == 'OTROS') {
                                     doc_acct_code = '21501002-000';
@@ -481,11 +481,11 @@ exports.orquestador_server_2 = async (req, resp) => {
                                 let aju_profit_code = '';
                                 let aju_currency_code = 'CLP';
                                 let aju_rate_exchange = 1;
-        
+
                                 let aju_acct_code = '21102001-000';
                                 let aju_ref_text2 = 'EXCEDENTE CLIENTE';
                                 let aju_desc_text = razon_social;
-        
+
                                 columna = '';                           valor = '';
                                 columna+=`"fk_cabecera",`;              valor+=`'`+ aju_fk_cabecera +`',`;
                                 columna+=`"seq_num",`;                  valor+=`'`+ aju_seq_num +`',`;
@@ -509,7 +509,7 @@ exports.orquestador_server_2 = async (req, resp) => {
                                 columna+=`"acct_code",`;                valor+=`'`+ aju_acct_code +`',`;
                                 columna+=`"ref_text2",`;                valor+=`'`+ aju_ref_text2 +`',`;
                                 columna+=`"desc_text"`;                 valor+=`'`+ aju_desc_text +`'`;
-        
+
                                 save_detalle(columna, valor);
                                 /** XML DETALLE BANCO  **/
                                 xmltext_aux += `<DETAIL>`;
@@ -555,25 +555,25 @@ exports.orquestador_server_2 = async (req, resp) => {
         }
 
         async function get_cliente_rut(fk_cliente) {
-                    
-            var rut_cliente = await client.query(`SELECT rut FROM public.clientes WHERE id='${fk_cliente}'`); 
+
+            var rut_cliente = await client.query(`SELECT rut FROM public.clientes WHERE id='${fk_cliente}'`);
             if (rut_cliente.rows.length > 0) {
                 return rut_cliente.rows[0]['rut'].replace('.', '').replace('.', '');
             } else {
                 return false
             }
-                                
+
         }
 
         async function save_detalle(columna, valor) {
-            
+
             console.log(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
             var insert = await client.query(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
-                                
+
         }
 
         async function crear_pago_wsc_cws(xmlBase, pago, cust_code, monto, concepto) {
-            
+
             //          DEBE
             xmlBase += `<DETAIL>`;
             xmlBase += `<CMPY_CODE>`+ '03' +`</CMPY_CODE>`;
@@ -628,7 +628,7 @@ exports.orquestador_server_2 = async (req, resp) => {
             xmlBase += `<DEBIT_AMT3>`+ 0 +`</DEBIT_AMT3>`;
             xmlBase += `<CREDIT_AMT3>`+ 0 +`</CREDIT_AMT3>`;
             xmlBase += `<CURRENCY_IND >`+ '1' +`</CURRENCY_IND >`;
-            xmlBase += `</DETAIL>`;  
+            xmlBase += `</DETAIL>`;
 
             xmlBase +=`</BATCH></string>`;
 
@@ -639,7 +639,7 @@ exports.orquestador_server_2 = async (req, resp) => {
         async function send_pago_maximise(xml, fk_cabecera) {
 
             console.log(xml);
-                    
+
             const request = require('request');
             const fs = require("fs");
 
@@ -668,35 +668,35 @@ exports.orquestador_server_2 = async (req, resp) => {
 
             request.post(options, (err, res, body) => {
 
-                if(err) { 
+                if(err) {
                     console.log('error, ' + err);
                 }
-                else if(body) {   
+                else if(body) {
                     console.log(" RESPUESTA ");
                     if(res.statusCode!=200 ){
-                        
-                        console.log("ERROR "); 
+
+                        console.log("ERROR ");
                         console.log(JSON.stringify(res.body));
 
                     } else if(res.statusCode==200 ) {
 
-                        console.log("\n\nSUCCESS "); 
+                        console.log("\n\nSUCCESS ");
                         console.log("\n\n"+JSON.stringify(res.body));
                         var RespMax = JSON.stringify(res.body);
                         var IdMax = RespMax.match(/<int xmlns=\"Maximise\">([^<]*)<\/int>/);
                         console.log('\n\nId Maximise '+IdMax);
-                        if (fk_cabecera != -1) 
+                        if (fk_cabecera != -1)
                         {
                             actualizar_estado_bd('MAXIMISE', fk_cabecera, IdMax)
                         }
-                    } 
+                    }
                 }
             });
-                                
+
         }
 
         async function actualizar_estado_bd(estado, fk_cabecera, IdMax) {
-            
+
             var moment = require('moment');
             let fecha = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
 
@@ -708,19 +708,19 @@ exports.orquestador_server_2 = async (req, resp) => {
 
             console.log(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
             await client.query(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
-                
+
             client.query(` UPDATE public.queue_maximise SET estado='${estado}' WHERE id=${tarea.id} `);
-            
+
         }
     }
 
-    async function enviar_pago_usd_maximise(tarea) { 
+    async function enviar_pago_usd_maximise(tarea) {
         console.log('Envio de pago usd')
         client.query(` UPDATE public.queue_maximise SET estado='PROCESANDO' WHERE id=${tarea.id} `);
 
-        var carpeta_data = await client.query(` SELECT id, fk_responsable, errores, estado, cmpy_code, year_num, period_num, jour_code, entry_code, debit_amt, credit_amt, post_flag, com_text, cleared_flag, control_amt, debit_amt1, credit_amt1, debit_amt2, credit_amt2, debit_amt3, credit_amt3, tran_type_ind, ledger_code, fk_despacho, fk_nota_cobro, carpeta, codigo_cliente, monto, descripcion_movimiento, saldo, fecha_ingreso, fecha_registro, "fk_createdBy", "fk_updatedBy", "createdAt", "updatedAt", codigo_bi_pago, conversion, razon_social, 
-                                                    to_char(entry_date, 'DD-MM-YYYY') as entry_date, 
-                                                    to_char(jour_date, 'DD-MM-YYYY') as jour_date, 
+        var carpeta_data = await client.query(` SELECT id, fk_responsable, errores, estado, cmpy_code, year_num, period_num, jour_code, entry_code, debit_amt, credit_amt, post_flag, com_text, cleared_flag, control_amt, debit_amt1, credit_amt1, debit_amt2, credit_amt2, debit_amt3, credit_amt3, tran_type_ind, ledger_code, fk_despacho, fk_nota_cobro, carpeta, codigo_cliente, monto, descripcion_movimiento, saldo, fecha_ingreso, fecha_registro, "fk_createdBy", "fk_updatedBy", "createdAt", "updatedAt", codigo_bi_pago, conversion, razon_social,
+                                                    to_char(entry_date, 'DD-MM-YYYY') as entry_date,
+                                                    to_char(jour_date, 'DD-MM-YYYY') as jour_date,
                                                     to_char(fecha_movimiento, 'DD-MM-YYYY') as fecha_movimiento
                                                 FROM public.wsc_envio_asientos_cabeceras where id=${tarea['fk_cabecera']}`);
 
@@ -790,29 +790,29 @@ exports.orquestador_server_2 = async (req, resp) => {
             }
 
             consultar_carpeta_maximise(tarea['fk_cabecera'], pago, xmltext_aux, razon_social);
-        
-        } 
+
+        }
 
         async function consultar_carpeta_maximise(fk_cabecera, pago, xmltext_aux, razon_social) {
-    
+
             const request = require('request');
             const fs = require("fs");
-    
-            const xmltext = `SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num, 
+
+            const xmltext = `SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num,
                             (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND (CMPY_CODE='02' OR CMPY_CODE='03' OR CMPY_CODE='04')) as total_credito
                             FROM invoicehead ih
-                            WHERE ih.cmpy_code='04' and 
-                            ih.POSTED_FLAG<>'V' and 
-                            ih.ref_text1='${pago.n_carpeta}' 
+                            WHERE ih.cmpy_code='04' and
+                            ih.POSTED_FLAG<>'V' and
+                            ih.ref_text1='${pago.n_carpeta}'
                             ORDER BY ih.doc_code asc;`;
-    
+
             const data = {
                 AliasName: 'dwi_tnm',
                 UserName: 'webservice',
                 Password: 'webservice001',
                 Sql: xmltext
             };
-    
+
             const options = {
                 url: 'http://asp3.maximise.cl/wsv/query.asmx/GetQueryAsDataSet',
                 method: 'POST',
@@ -828,34 +828,34 @@ exports.orquestador_server_2 = async (req, resp) => {
                     Sql: xmltext
                 }
             };
-    
+
             try {
-    
+
                 request.post(options, async(err, res, body) => {
-    
-                    if(err) 
-                    { 
+
+                    if(err)
+                    {
                         console.log(err);
                     }
-                    else if(body) 
-                    {   
+                    else if(body)
+                    {
                         console.log(" RESPONSE GET INVOICEHEAD ");
                         if(res.statusCode!=200){
-    
+
                             console.log("ERROR");
                             console.log(JSON.stringify(res.body));
-    
+
                         }
                         else if(res.statusCode==200 )
                         {
                             var documentos = [];
                             var payment = Number(pago.monto) * Number(pago.conversion);
-    
+
                             var entries = JSON.stringify(body).split('<Table');
-    
+
                             let resp_cust_code = '';
                             let nota_debito = 0;
-    
+
                             //GUARDO DOCUMENTOS EN ARRAY DE OBJETOS
                             for(var j=1; j<entries.length; j++) {
                                 let resp_inv_num = entries[j].split('<INV_NUM>').pop().split('</INV_NUM>')[0];
@@ -868,24 +868,24 @@ exports.orquestador_server_2 = async (req, resp) => {
                                 let resp_ext_num = entries[j].split('<ext_num>').pop().split('</ext_num>')[0];
                                 let resp_total_credito = entries[j].split('<total_credito>').pop().split('</total_credito>')[0];
                                 let resp_cred_num = entries[j].split('<cred_num>').pop().split('</cred_num>')[0];
-    
+
                                 let resp_por_pagar = Number(resp_total_amt) - Number(resp_paid_amt);
-    
+
                                 try {
                                     if (Number(resp_total_credito) > 0) {
                                         resp_por_pagar -= Number(resp_total_credito)
                                     }
                                 } catch {
-    
+
                                 }
-    
+
                                 if (resp_doc_code == 'F8') {
                                     resp_por_pagar += nota_debito;
                                 }
-    
+
                                 if (resp_doc_code == 'D1'){
                                     nota_debito = Number(resp_total_amt)
-    
+
                                 } else if (resp_doc_code != 'P8' && resp_por_pagar > 10) {
                                     documentos.push({
                                         resp_inv_num: resp_inv_num,
@@ -900,7 +900,7 @@ exports.orquestador_server_2 = async (req, resp) => {
                                 }
                             }
                             console.log(documentos);
-    
+
                             if (documentos.length == 0) {
                                 //DINERO SE IRA A EXCEDENTE, PERO HAY CAMPOS QUE DEBO CONSULTAR DESDE OTRA FUENTE
                                 resp_cust_code = await get_cliente_rut(pago.cliente.split(' ')[0]);
@@ -908,11 +908,11 @@ exports.orquestador_server_2 = async (req, resp) => {
                                     return false;
                                 }
                             }
-    
+
                             // BANCO BANCO BANCO BANCO BANCO BANCO BANCO BANCO BANCO
-    
+
                             var auto_num = 1;
-    
+
                             let bco_fk_cabecera = fk_cabecera;
                             let bco_seq_num = auto_num;
                             let bco_analysis_text = '';
@@ -932,11 +932,11 @@ exports.orquestador_server_2 = async (req, resp) => {
                             let bco_profit_code = '';
                             let bco_currency_code = 'USD';
                             let bco_rate_exchange = 1;
-    
+
                             let bco_acct_code = '11103002-000';
                             let bco_ref_text2 = resp_cust_code;
                             let bco_desc_text = 'BANCO SANTANDER';
-    
+
                             columna = '';                           valor = '';
                             columna+=`"fk_cabecera",`;              valor+=`'`+ bco_fk_cabecera +`',`;
                             columna+=`"seq_num",`;                  valor+=`'`+ bco_seq_num +`',`;
@@ -960,7 +960,7 @@ exports.orquestador_server_2 = async (req, resp) => {
                             columna+=`"acct_code",`;                valor+=`'`+ bco_acct_code +`',`;
                             columna+=`"ref_text2",`;                valor+=`'`+ bco_ref_text2 +`',`;
                             columna+=`"desc_text"`;                 valor+=`'`+ bco_desc_text +`'`;
-    
+
                             save_detalle(columna, valor);
                             /** XML DETALLE BANCO  **/
                             xmltext_aux += `<DETAIL>`;
@@ -988,15 +988,15 @@ exports.orquestador_server_2 = async (req, resp) => {
                             xmltext_aux += `<DEBIT_AMT3>`+ bco_debit_amt3 +`</DEBIT_AMT3>`;
                             xmltext_aux += `<CREDIT_AMT3>`+ bco_credit_amt3 +`</CREDIT_AMT3>`;
                             xmltext_aux += `<JOUR_CODE >`+ 'IPC' +`</JOUR_CODE >`;
-    
+
                             xmltext_aux += `</DETAIL>`;
-    
+
                             auto_num++;
                             // DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO DOCUMENTO
                             for (let i=0; i<documentos.length; i++) {
-    
+
                                 console.log(documentos[i].resp_inv_num);
-    
+
                                 var curr_pay = 0;
                                 if(payment - documentos[i].resp_por_pagar >= 0) {
                                     curr_pay = documentos[i].resp_por_pagar;
@@ -1005,7 +1005,7 @@ exports.orquestador_server_2 = async (req, resp) => {
                                     curr_pay = payment;
                                     payment = 0;
                                 }
-    
+
                                 let doc_fk_cabecera = fk_cabecera;
                                 let doc_seq_num = auto_num;
                                 let doc_analysis_text = resp_cust_code;
@@ -1026,15 +1026,15 @@ exports.orquestador_server_2 = async (req, resp) => {
                                 let doc_currency_code = 'USD';
                                 let doc_rate_exchange = 1;
                                 let doc_desc_text = razon_social.replace('&', '');
-    
+
                                 let doc_acct_code = '11301001-001';
                                 let doc_ref_text2 = 'PAGO DIN WSC';
-    
+
                                 if (documentos[i].resp_doc_code != 'DI') {
                                     doc_acct_code = '11301001-000';
                                     doc_ref_text2 = 'PAGO FACT';
-                                } 
-    
+                                }
+
                                 columna = '';                           valor = '';
                                 columna+=`"fk_cabecera",`;              valor+=`'`+ doc_fk_cabecera +`',`;
                                 columna+=`"seq_num",`;                  valor+=`'`+ doc_seq_num +`',`;
@@ -1058,7 +1058,7 @@ exports.orquestador_server_2 = async (req, resp) => {
                                 columna+=`"acct_code",`;                valor+=`'`+ doc_acct_code +`',`;
                                 columna+=`"ref_text2",`;                valor+=`'`+ doc_ref_text2 +`',`;
                                 columna+=`"desc_text"`;                 valor+=`'`+ doc_desc_text +`'`;
-    
+
                                 save_detalle(columna, valor);
                                 /** XML DETALLE DOCUMENTO **/
                                 xmltext_aux += `<DETAIL>`;
@@ -1087,17 +1087,17 @@ exports.orquestador_server_2 = async (req, resp) => {
                                 xmltext_aux += `<CREDIT_AMT3>`+ doc_credit_amt3 +`</CREDIT_AMT3>`;
                                 xmltext_aux += `<REF_AMT>`+ doc_credit_amt +`</REF_AMT>`;
                                 xmltext_aux += `<JOUR_CODE >`+ 'IPC' +`</JOUR_CODE >`;
-    
+
                                 xmltext_aux += `</DETAIL>`;
-    
+
                                 if (payment == 0) {
                                     break;
                                 }
                                 auto_num++;
                             }
-    
+
                             if (payment > 0) {//SOBRO DINERO, SE AGREGA A AJUSTE
-    
+
                                 let aju_fk_cabecera = fk_cabecera;
                                 let aju_seq_num = auto_num;
                                 let aju_analysis_text = resp_cust_code;
@@ -1117,11 +1117,11 @@ exports.orquestador_server_2 = async (req, resp) => {
                                 let aju_profit_code = '';
                                 let aju_currency_code = 'USD';
                                 let aju_rate_exchange = 1;
-        
+
                                 let aju_acct_code = '21102001-000';
                                 let aju_ref_text2 = 'EXCEDENTE CLIENTE';
                                 let aju_desc_text = razon_social.replace('&', '');
-        
+
                                 columna = '';                           valor = '';
                                 columna+=`"fk_cabecera",`;              valor+=`'`+ aju_fk_cabecera +`',`;
                                 columna+=`"seq_num",`;                  valor+=`'`+ aju_seq_num +`',`;
@@ -1145,7 +1145,7 @@ exports.orquestador_server_2 = async (req, resp) => {
                                 columna+=`"acct_code",`;                valor+=`'`+ aju_acct_code +`',`;
                                 columna+=`"ref_text2",`;                valor+=`'`+ aju_ref_text2 +`',`;
                                 columna+=`"desc_text"`;                 valor+=`'`+ aju_desc_text +`'`;
-        
+
                                 save_detalle(columna, valor);
                                 /** XML DETALLE BANCO  **/
                                 xmltext_aux += `<DETAIL>`;
@@ -1174,54 +1174,54 @@ exports.orquestador_server_2 = async (req, resp) => {
                                 xmltext_aux += `<CREDIT_AMT3>`+ aju_credit_amt3 +`</CREDIT_AMT3>`;
                                 xmltext_aux += `<REF_AMT>`+ aju_credit_amt +`</REF_AMT>`;
                                 xmltext_aux += `<JOUR_CODE >`+ 'IPC' +`</JOUR_CODE >`;
-    
+
                                 xmltext_aux += `</DETAIL>`;
                             }
-    
+
                             xmltext_aux +=`</BATCH></string>`;
                             send_pago_maximise(xmltext_aux, fk_cabecera)
-    
+
                         }
                     }
                 });
             } catch (error) {
                 return false
-    
+
             }
         }
-    
+
         async function get_cliente_rut(fk_cliente) {
-                    
-            var rut_cliente = await client.query(`SELECT rut FROM public.clientes WHERE id='${fk_cliente}'`); 
+
+            var rut_cliente = await client.query(`SELECT rut FROM public.clientes WHERE id='${fk_cliente}'`);
             if (rut_cliente.rows.length > 0) {
                 return rut_cliente.rows[0]['rut'].replace('.', '').replace('.', '');
             } else {
                 return false
             }
-                                
+
         }
-    
+
         async function save_detalle(columna, valor) {
-            
+
             console.log(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
             var insert = await client.query(` INSERT INTO public.wsc_envio_asientos_detalles (`+columna+`) VALUES (`+valor+`) RETURNING *`);
-                                
+
         }
-    
+
         async function send_pago_maximise(xml, fk_cabecera) {
-    
+
             console.log(xml);
-                    
+
             const request = require('request');
             const fs = require("fs");
-    
+
             const data = {
                 AliasName: 'dwi_tnm',
                 UserName: 'webservice',
                 Password: 'webservice001',
                 Data: xml
             };
-    
+
             const options = {
                 url: 'http://asp3.maximise.cl/wsv/batch.asmx/SaveDocument',
                 method: 'POST',
@@ -1237,54 +1237,54 @@ exports.orquestador_server_2 = async (req, resp) => {
                     Data: xml
                 }
             };
-    
-    
+
+
             request.post(options, (err, res, body) => {
 
-                if(err) { 
+                if(err) {
                     console.log('error, ' + err);
                 }
-                else if(body) {   
+                else if(body) {
                     console.log(" RESPUESTA ");
                     if(res.statusCode!=200 ){
-                        
-                        console.log("ERROR "); 
+
+                        console.log("ERROR ");
                         console.log(JSON.stringify(res.body));
 
                     } else if(res.statusCode==200 ) {
 
-                        console.log("\n\nSUCCESS "); 
+                        console.log("\n\nSUCCESS ");
                         console.log("\n\n"+JSON.stringify(res.body));
                         var RespMax = JSON.stringify(res.body);
                         var IdMax = RespMax.match(/<int xmlns=\"Maximise\">([^<]*)<\/int>/);
                         console.log('\n\nId Maximise '+IdMax);
 
                         actualizar_estado_bd('MAXIMISE', fk_cabecera, IdMax)
-                    } 
+                    }
                 }
             });
-    
-                                
+
+
         }
-    
+
         async function actualizar_estado_bd(estado, fk_cabecera, IdMax) {
-            
+
             var moment = require('moment');
             let fecha = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
-    
+
             var query = '';
                 query+=`estado='`+estado+`', `;
                 query+=`id_maximise='`+IdMax+`', `;
                 query+=`"fk_updatedBy"=`+carpeta_data.rows[0]["fk_createdBy"]+`, `;
                 query+=`"updatedAt"='`+fecha+`'`;
-    
+
             console.log(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
             await client.query(`UPDATE public.wsc_envio_asientos_cabeceras SET `+query+` WHERE id=`+fk_cabecera+` RETURNING *`);
 
             client.query(` UPDATE public.queue_maximise SET estado='${estado}' WHERE id=${tarea.id} `);
-                                
+
         }
-    }    
+    }
 }
 
 exports.orquestador_server_1 = async (req, resp) => {
@@ -1293,7 +1293,7 @@ exports.orquestador_server_1 = async (req, resp) => {
     console.log("SCHEDULER MAXIMISE");
     var sche_envio_maximise = require('node-schedule');
 
-    sche_envio_maximise.scheduleJob('*/60 * * * * *', () => {
+    sche_envio_maximise.scheduleJob('*/30 * * * * *', () => {
         console.log('');
         console.log("CONSULTANDO COLA ");
         console.log("$$$");
@@ -1301,7 +1301,7 @@ exports.orquestador_server_1 = async (req, resp) => {
 
     });
 
-    async function orquestador_server_1() { 
+    async function orquestador_server_1() {
         var tarea = await client.query(` SELECT * FROM public.queue_maximise WHERE estado='PENDIENTE' ORDER BY id ASC limit 1`);
         console.log("$$$$$$");
         if(tarea.rows.length > 0) {
@@ -1320,7 +1320,7 @@ exports.orquestador_server_1 = async (req, resp) => {
         }
     }
 
-    async function enviar_documento_maximise_wsc(tarea) { 
+    async function enviar_documento_maximise_wsc(tarea) {
         console.log('Envio de documento');
         client.query(` UPDATE public.queue_maximise SET estado='PROCESANDO' WHERE id=${tarea.id} `);
 
@@ -1337,25 +1337,27 @@ exports.orquestador_server_1 = async (req, resp) => {
 
         var facturas = await client.query(` SELECT * FROM public.wsc_envio_facturas_cabeceras2 where id=${tarea['fk_cabecera']}`);
 
+        console.log('\n\nFACTURAS '+facturas.rows.length+'\n\n');
         if(facturas.rows.length>0)
         {
 
             let fk_nota_cobro = facturas.rows[0]['fk_nota_cobro'];
 
-            var detalles = await client.query(` 
-            SELECT 
-            * 
-            FROM public.wsc_envio_facturas_detalles2 
-            where 
-            fk_cabecera=`+facturas.rows[0]['numero_unico']+` 
-            and anomesdiahora=`+facturas.rows[0]['anomesdiahora']+` 
+            var detalles = await client.query(`
+            SELECT
+            *
+            FROM public.wsc_envio_facturas_detalles2
+            where
+            fk_cabecera=`+facturas.rows[0]['numero_unico']+`
+            and anomesdiahora=`+facturas.rows[0]['anomesdiahora']+`
             `);
-
+            console.log('\n\DETALLES '+detalles.rows.length+'\n\n');
             if(detalles.rows.length>0)
             {
-                if (facturas.rows[0]['total_amt'] > 0) {
+                if (facturas.rows[0]['total_amt'] > 0)
+                {
                     var inv_date_aux = facturas.rows[0]['inv_date'].split('-');
-                    var contador = await client.query(` 
+                    var contador = await client.query(`
                         SELECT count(*)+1 as cont
                         FROM wsc_envio_facturas_cabeceras2
                         WHERE doc_code='${facturas.rows[0]['doc_code']}' AND fk_nota_cobro=${fk_nota_cobro}
@@ -1371,20 +1373,20 @@ exports.orquestador_server_1 = async (req, resp) => {
                     const fs = require("fs");
 
                     const xmltext = `
-                                        SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num, 
+                                        SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num,
                                         (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND CMPY_CODE='04') as total_credito
                                         FROM invoicehead ih
-                                        WHERE ih.cmpy_code='04' and 
+                                        WHERE ih.cmpy_code='04' and
                                             ih.POSTED_FLAG<>'V' and
                                             ih.ref_text1='${facturas.rows[0]['ref_text1']}' and
-                                            ((ih.doc_code='${facturas.rows[0]['doc_code']}' and 
+                                            ((ih.doc_code='${facturas.rows[0]['doc_code']}' and
                                             (
                                                 ((ih.com_text like 'EXENTO%' OR ih.com_text LIKE '%EXENTO%' or ih.com_text like 'AFECTO%' OR ih.com_text LIKE '%AFECTO%') and ih.com_text like '${facturas.rows[0]['com_text'].split(' ')[0]}%' OR ih.com_text LIKE '%${facturas.rows[0]['com_text'].split(' ')[0]}%')
                                                 or
                                                 not (ih.com_text like 'EXENTO%' OR ih.com_text LIKE '%EXENTO%' or ih.com_text like 'AFECTO%' OR ih.com_text LIKE '%AFECTO%')
                                             )
                                             ) or ih.doc_code='D1')
-                                        ORDER BY ih.inv_num DESC;  
+                                        ORDER BY ih.inv_num DESC;
                                     `;
 
                     console.log('xml', xmltext);
@@ -1415,13 +1417,15 @@ exports.orquestador_server_1 = async (req, resp) => {
 
                     request.post(options_get, (err, res, body) => {
 
-                        if(err) 
-                        { 
+                        if(err)
+                        {
                             console.log(err);
                         }
-                        else if(body) 
-                        {   
-                            console.log(" RESPONSE GET INVOICEHEAD ");
+                        else if(body)
+                        {
+                            console.log("\n\nRESPONSE GET INVOICEHEAD ");
+                            console.log("\n\nRESPONSE STATUS CODE "+res.statusCode);
+                            console.log("\n\nRESPONSE BODY "+JSON.stringify(res.body));
                             if(JSON.stringify(res.body).includes("System.Web.Services.Protocols.SoapException:")){
 
                                 console.log("System.Web.Services.Protocols.SoapException:");
@@ -1476,7 +1480,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                         }
                     });
 
-                    
+
 
                     async function enviar_documento_maximise(facturas, inv_date_aux, today_ano, today_mes, today_dia, monto, contador, i, detalles, flag_refactura)
                     {
@@ -1496,7 +1500,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                         xmltext_aux += `<RATE_EXCHANGE>1</RATE_EXCHANGE>`;
 
                         if (flag_refactura) {
-                            
+
                             if (facturas.rows[0]['doc_code'] == 'DI') {
                                 xmltext_aux += `<GOODS_AMT>`+monto+`</GOODS_AMT>`;
                                 xmltext_aux += `<EXCENT_AMT>`+monto+`</EXCENT_AMT>`;
@@ -1516,19 +1520,19 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 xmltext_aux += `<TOTAL_AMT>`+Number(Number(monto)*1.19).toFixed(0)+`</TOTAL_AMT>`;
                                 xmltext_aux += `<THRDUE_AMT>`+0+`</THRDUE_AMT>`;
                             }
-                            
+
                             xmltext_aux += `<COST_AMT>0</COST_AMT>`;
                             xmltext_aux += `<PAID_AMT>0</PAID_AMT>`;
-        
+
                             if(facturas.rows[0]['doc_code']=='P8'){
-        
+
                                 xmltext_aux += `<TAX_AMT>0</TAX_AMT>`;
-        
+
                             }
-        
+
                             var comuna = String(facturas.rows[0]['idcomuna']).length==5?String(facturas.rows[0]['idcomuna']):'0'+String(facturas.rows[0]['idcomuna']);
                             var ciudad = String(facturas.rows[0]['idciudad']);
-                            
+
                             xmltext_aux += `<DUE_DATE>`+facturas.rows[0]['due_date']+`</DUE_DATE>`;
                             xmltext_aux += `<POSTED_FLAG>N</POSTED_FLAG>`;
                             xmltext_aux += `<PRINTED_FLAG>N</PRINTED_FLAG>`;
@@ -1552,7 +1556,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             xmltext_aux += `<AR_ACCT_CODE>`+facturas.rows[0]['ar_acct_code']+`</AR_ACCT_CODE>`;
                             xmltext_aux += `<YEAR_NUM>`+(Number(inv_date_aux[2])*1)+`</YEAR_NUM>`;
                             xmltext_aux += `<PERIOD_NUM>`+(Number(inv_date_aux[1])*1)+`</PERIOD_NUM>`;
-                            
+
                             if(facturas.rows[0]['doc_code']=='DI'){
                                 xmltext_aux += `<EXT_NUM>`+facturas.rows[0]['ext_num']+`</EXT_NUM>`;
                             }else{
@@ -1572,7 +1576,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             xmltext_aux += `<RET_AMT>0</RET_AMT>`;
                             xmltext_aux += `<RET_PER>0</RET_PER>`;
                             xmltext_aux += `</HEAD>`;
-                
+
                             var NombreArchivo = facturas.rows[0]['ref_text1'];
 
                             xmltext_aux += `<DETAIL>`;
@@ -1610,7 +1614,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             if(facturas.rows[0]['doc_code']=='PF'){
                                 xmltext_aux += `<REF_TEXT2>`+detalles.rows[0]['ref_text2']+`</REF_TEXT2>`;
                             }
-                            
+
 
                             if(facturas.rows[0]['doc_code']=='DI' || facturas.rows[0]['doc_code']=='PF'){
                                 xmltext_aux += `<LINE_TEXT1>`+detalles.rows[0]['line_text1']+`</LINE_TEXT1>`;
@@ -1621,26 +1625,26 @@ exports.orquestador_server_1 = async (req, resp) => {
                             xmltext_aux += `</DETAIL>`;
 
                         } else {
-                            
+
                             xmltext_aux += `<GOODS_AMT>`+facturas.rows[0]['goods_amt']+`</GOODS_AMT>`;
                             xmltext_aux += `<EXCENT_AMT>`+facturas.rows[0]['excent_amt']+`</EXCENT_AMT>`;
                             xmltext_aux += `<TOTAL_AMT>`+facturas.rows[0]['total_amt']+`</TOTAL_AMT>`;
                             xmltext_aux += `<COST_AMT>0</COST_AMT>`;
                             xmltext_aux += `<PAID_AMT>0</PAID_AMT>`;
-        
+
                             if(facturas.rows[0]['doc_code']=='P8'){
-        
+
                                 xmltext_aux += `<THRDUE_AMT>`+facturas.rows[0]['thrdue_amt']+`</THRDUE_AMT>`;
                                 xmltext_aux += `<TAX_AMT>0</TAX_AMT>`;
-        
+
                             }else if(facturas.rows[0]['doc_code']=='F9' || facturas.rows[0]['doc_code']=='P9'){
                                 xmltext_aux += `<TAX_AMT>`+facturas.rows[0]['tax_amt']+`</TAX_AMT>`;
                                 xmltext_aux += `<THRDUE_AMT>0</THRDUE_AMT>`;
                             }
-        
+
                             var comuna = String(facturas.rows[0]['idcomuna']).length==5?String(facturas.rows[0]['idcomuna']):'0'+String(facturas.rows[0]['idcomuna']);
                             var ciudad = String(facturas.rows[0]['idciudad']);
-                            
+
                             xmltext_aux += `<DUE_DATE>`+facturas.rows[0]['due_date']+`</DUE_DATE>`;
                             xmltext_aux += `<POSTED_FLAG>N</POSTED_FLAG>`;
                             xmltext_aux += `<PRINTED_FLAG>N</PRINTED_FLAG>`;
@@ -1664,7 +1668,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             xmltext_aux += `<AR_ACCT_CODE>`+facturas.rows[0]['ar_acct_code']+`</AR_ACCT_CODE>`;
                             xmltext_aux += `<YEAR_NUM>`+(Number(inv_date_aux[2])*1)+`</YEAR_NUM>`;
                             xmltext_aux += `<PERIOD_NUM>`+(Number(inv_date_aux[1])*1)+`</PERIOD_NUM>`;
-                            
+
                             if(facturas.rows[0]['doc_code']=='DI'){
                                 xmltext_aux += `<EXT_NUM>`+facturas.rows[0]['ext_num']+`</EXT_NUM>`;
                             }else{
@@ -1684,7 +1688,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             xmltext_aux += `<RET_AMT>0</RET_AMT>`;
                             xmltext_aux += `<RET_PER>0</RET_PER>`;
                             xmltext_aux += `</HEAD>`;
-                
+
                             var NombreArchivo = facturas.rows[0]['ref_text1'];
                             for(var i=0; i<detalles.rows.length; i++)
                             {
@@ -1719,26 +1723,27 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 xmltext_aux += `<BRAN_CODE>`+detalles.rows[i]['brand_code']+`</BRAN_CODE>`;
                                 xmltext_aux += `<UNIT_COMCOST_AMT>`+detalles.rows[i]['unit_comcost_amt']+`</UNIT_COMCOST_AMT>`;
                                 xmltext_aux += `<UNIT_IFRSCOST_AMT>`+detalles.rows[i]['unit_ifrscost_amt']+`</UNIT_IFRSCOST_AMT>`;
-        
+
                                 if(facturas.rows[0]['doc_code']=='PF'){
                                     xmltext_aux += `<REF_TEXT2>`+detalles.rows[i]['ref_text2']+`</REF_TEXT2>`;
                                 }
-                                
-        
+
+
                                 if(facturas.rows[0]['doc_code']=='DI' || facturas.rows[0]['doc_code']=='PF'){
                                     xmltext_aux += `<LINE_TEXT1>`+detalles.rows[i]['line_text1']+`</LINE_TEXT1>`;
                                     xmltext_aux += `<REF_TEXT1>`+facturas.rows[0]['ref_text1']+`</REF_TEXT1>`;
                                 }
-        
+
                                 xmltext_aux += `<TAXEDUNIT_PRICE_AMT>`+detalles.rows[i]['taxedunit_price_amt']+`</TAXEDUNIT_PRICE_AMT>`;
                                 xmltext_aux += `</DETAIL>`;
                             }
                         }
 
-                        
+
                         xmltext_aux +=`</CUSTOMERINVOICE></string>`;
 
                         update_estado_factura('CARGADA MAXIMISE', facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
+
 
                         const data = {
                             AliasName: 'dwi_tnm',
@@ -1765,17 +1770,17 @@ exports.orquestador_server_1 = async (req, resp) => {
                         request.post(options, (err, res, body) => {
 
                             var texto_log = '';
-                            if(err) 
-                            { 
+                            if(err)
+                            {
                                 update_error_cargar_maximise(err, facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
                             }
-                            else if(body) 
-                            {   
-                                console.log(" --------------------------- RES "+facturas.rows[0]['ref_text1'] + ' -----------------------------'); 
+                            else if(body)
+                            {
+                                console.log(" --------------------------- RES "+facturas.rows[0]['ref_text1'] + ' -----------------------------');
                                 console.log("  ");
                                 if(JSON.stringify(res.body).includes("System.Web.Services.Protocols.SoapException:")){
-                                    
-                                    console.log(" --------------------------- ERROR "); 
+
+                                    console.log(" --------------------------- ERROR ");
                                     update_error_cargar_maximise(JSON.stringify(res.body), facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
 
                                 }
@@ -1784,8 +1789,8 @@ exports.orquestador_server_1 = async (req, resp) => {
                                     var numero_interno = JSON.stringify(body);
                                     numero_interno = numero_interno.replace('</int>', '');
                                     var id_maximise = numero_interno.substring(71, (Number(numero_interno.length)-1) );
-                                    console.log(" --------------------------- BODY REPORT "); 
-                                    console.log(" --------------------------- "+id_maximise); 
+                                    console.log(" --------------------------- BODY REPORT ");
+                                    console.log(" --------------------------- "+id_maximise);
                                     console.log("  ");
 
                                     let numero, msg;
@@ -1807,13 +1812,14 @@ exports.orquestador_server_1 = async (req, resp) => {
 
                                     update_cargado_maximise(id_maximise, facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
                                     if( facturas.rows[0]['servicio']=='SI' ){
-                                        enviar_documento_sii(id_maximise, facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], NombreArchivo, facturas.rows[0]['cmpy_code'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
+                                        /* lalo */
+                                        //enviar_documento_sii(id_maximise, facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], NombreArchivo, facturas.rows[0]['cmpy_code'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
                                     }
                                 }
                             }
                         });
 
-                    
+
                     }
 
                     async function enviar_documento_sii(id_maximise, cabecera, anomesdiahora, NombreArchivo, cmpy_code, fk_nota_cobro, doc_code)
@@ -1827,7 +1833,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             DocumentNumber: id_maximise,
                             Company: cmpy_code
                         };
-                    
+
                         const options = {
                             url: 'http://asp3.maximise.cl/wsv/Invoice.asmx/PrintDocument',
                             method: 'POST',
@@ -1844,21 +1850,21 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 Company: cmpy_code
                             }
                         };
-                    
+
                         request.post(options, (err, res, body) => {
-                    
+
                             var texto_log = '';
-                            if(err) 
-                            { 
+                            if(err)
+                            {
                                 update_error_cargar_sii('ERROR CARGAR SII', cabecera, anomesdiahora, fk_nota_cobro, doc_code);
                             }
-                            else if(body) 
-                            {   
-                                console.log(" --------------------------- SII --------------------------"); 
+                            else if(body)
+                            {
+                                console.log(" --------------------------- SII --------------------------");
                                 console.log(JSON.stringify(body));
                                 if(res.statusCode==200 )
                                 {
-                                    console.log(" --------------------------- BODY REPORT "+JSON.stringify(body)); 
+                                    console.log(" --------------------------- BODY REPORT "+JSON.stringify(body));
                                     console.log("  ");
 
                                     var folio_sii = JSON.stringify(body);
@@ -1874,8 +1880,8 @@ exports.orquestador_server_1 = async (req, resp) => {
                                         DocumentNumber: id_maximise,
                                         Company: cmpy_code
                                     };
-                            
-                                    
+
+
                                     const options = {
                                         url: 'http://asp3.maximise.cl/wsv/Invoice.asmx/DownloadPdf',
                                         method: 'POST',
@@ -1892,15 +1898,15 @@ exports.orquestador_server_1 = async (req, resp) => {
                                             Company: cmpy_code
                                         }
                                     };
-                            
+
                                     const response_req = request.post(options, (err, res, body) => {
-                                        
+
                                     });
-                                    
+
                                     response_req.on('response', function (res) {
-                
+
                                         res.pipe(fs.createWriteStream('C:/Users/Administrator/Documents/wscargo/restserver/public/files/fact_cargar_por_contenedor/'+NombreArchivo+'.pdf'));
-                
+
                                     });
 
                                     //enviar_notificacion(13, 'Factura diponible del servicio disponible para entrega',fk_nota_cobro);
@@ -1914,54 +1920,54 @@ exports.orquestador_server_1 = async (req, resp) => {
                                     return "ERROR2";
                                 }
                             }
-                    
+
                         });
                     }
-                    
+
                     async function update_cargado_maximise(id_maximise, numero_unico, anomesdiahora, fk_nota_cobro, doc_code)
                     {
                         console.log (`CARGADA MAXIMISE `);
 
-                        await client.query(` 
-                        UPDATE public.wsc_envio_facturas_cabeceras2 
-                        SET estado='CARGADA MAXIMISE' 
+                        await client.query(`
+                        UPDATE public.wsc_envio_facturas_cabeceras2
+                        SET estado='CARGADA MAXIMISE'
                         , max_id_interno=`+id_maximise+`
-                        where 
-                        numero_unico=`+numero_unico+` 
-                        and 
-                        anomesdiahora=`+anomesdiahora+` 
+                        where
+                        numero_unico=`+numero_unico+`
+                        and
+                        anomesdiahora=`+anomesdiahora+`
                         `);
 
                         var codigo = doc_code=='DI'?1:doc_code=='P8'||doc_code=='PF'?2:3;
-                        await client.query(` 
-                        UPDATE public.notas_cobros_estados 
-                        SET estado='CARGADA MAXIMISE' 
+                        await client.query(`
+                        UPDATE public.notas_cobros_estados
+                        SET estado='CARGADA MAXIMISE'
                         WHERE fk_provision=`+fk_nota_cobro+` AND fk_tipo=${codigo}`);
 
-                        
+
                         client.query(` UPDATE public.queue_maximise SET estado='CARGADA MAXIMISE' WHERE id=${tarea.id} `);
-                        
+
                     }
 
                     async function update_error_cargar_sii(err, numero_unico, anomesdiahora, fk_nota_cobro, doc_code)
                     {
                         console.log(` ERROR CARGAR SII`);
 
-                        await client.query(` 
-                        UPDATE public.wsc_envio_facturas_cabeceras2 
-                        SET 
-                        estado='ERROR CARGAR SII' 
+                        await client.query(`
+                        UPDATE public.wsc_envio_facturas_cabeceras2
+                        SET
+                        estado='ERROR CARGAR SII'
                         , log = concat(log,'\n','`+err+`')
-                        where 
-                        numero_unico=`+numero_unico+` 
-                        and 
-                        anomesdiahora=`+anomesdiahora+` 
+                        where
+                        numero_unico=`+numero_unico+`
+                        and
+                        anomesdiahora=`+anomesdiahora+`
                         `);
 
                         var codigo = doc_code=='DI'?1:doc_code=='P8'||doc_code=='PF'?2:3;
-                        await client.query(` 
-                        UPDATE public.notas_cobros_estados 
-                        SET estado='ERROR CARGAR SII' 
+                        await client.query(`
+                        UPDATE public.notas_cobros_estados
+                        SET estado='ERROR CARGAR SII'
                         WHERE fk_provision=`+fk_nota_cobro+`  AND fk_tipo=${codigo}`);
 
                         client.query(` UPDATE public.queue_maximise SET estado='ERROR CARGAR SII' WHERE id=${tarea.id} `);
@@ -1971,32 +1977,32 @@ exports.orquestador_server_1 = async (req, resp) => {
                     async function update_error_cargar_maximise(err, numero_unico, anomesdiahora, fk_nota_cobro, doc_code)
                     {
                         console.log(`ERROR CARGAR MAXIMISE`);
-                        console.log(` 
-                        UPDATE public.wsc_envio_facturas_cabeceras2 
-                        SET 
-                        estado='ERROR CARGAR MAXIMISE' 
+                        console.log(`
+                        UPDATE public.wsc_envio_facturas_cabeceras2
+                        SET
+                        estado='ERROR CARGAR MAXIMISE'
                         , log = concat(log,'\n','`+err+`')
-                        where 
-                        numero_unico=`+numero_unico+` 
-                        and 
-                        anomesdiahora=`+anomesdiahora+` 
+                        where
+                        numero_unico=`+numero_unico+`
+                        and
+                        anomesdiahora=`+anomesdiahora+`
                         `);
 
-                        await client.query(` 
-                        UPDATE public.wsc_envio_facturas_cabeceras2 
-                        SET 
-                        estado='ERROR CARGAR MAXIMISE' 
+                        await client.query(`
+                        UPDATE public.wsc_envio_facturas_cabeceras2
+                        SET
+                        estado='ERROR CARGAR MAXIMISE'
                         , log = concat(log,'\n','`+err+`')
-                        where 
-                        numero_unico=`+numero_unico+` 
-                        and 
-                        anomesdiahora=`+anomesdiahora+` 
+                        where
+                        numero_unico=`+numero_unico+`
+                        and
+                        anomesdiahora=`+anomesdiahora+`
                         `);
 
                         var codigo = doc_code=='DI'?1:doc_code=='P8'||doc_code=='PF'?2:3;
-                        await client.query(` 
-                        UPDATE public.notas_cobros_estados 
-                        SET estado='ERROR CARGAR MAXIMISE' 
+                        await client.query(`
+                        UPDATE public.notas_cobros_estados
+                        SET estado='ERROR CARGAR MAXIMISE'
                         WHERE fk_provision=`+fk_nota_cobro+` AND fk_tipo=${codigo}`);
 
                         client.query(` UPDATE public.queue_maximise SET estado='ERROR CARGAR MAXIMISE', info_extra='ERROR: ${err}' WHERE id=${tarea.id} `);
@@ -2019,20 +2025,20 @@ exports.orquestador_server_1 = async (req, resp) => {
                     {
                         console.log(`ENVIADA SII`);
                         await client.query(` UPDATE public.wsc_envio_facturas_cabeceras2 SET estado='ENVIADA SII', sii_factura='`+folio_sii+`' where numero_unico=`+cabecera+` and anomesdiahora=`+anomesdiahora+` `);
-                        
+
                         var codigo = doc_code=='DI'?1:doc_code=='P8'||doc_code=='PF'?2:3;
                         await client.query(` UPDATE public.notas_cobros_estados SET estado='ENVIADA SII' WHERE fk_provision=`+fk_nota_cobro+` AND fk_tipo=${codigo}`);
 
                         client.query(` UPDATE public.queue_maximise SET estado='ENVIADA SII' WHERE id=${tarea.id} `);
-                    
+
                     }
 
                     async function enviar_notificacion(nro_notificacion, message,fk_nota_cobro)
                     {
-                        
+
                         if(process.env.notificacionesClienteDigital){
                             let proforma=await client.query(`
-                            SELECT 
+                            SELECT
                                 d.id,d.contenedor,d.fk_cliente,c.id as fk_contenedor,cp.id as fk_proforma,d.n_carpeta from
                                 public.despachos d
                                 INNER JOIN public.notas_cobros nc on nc.fk_despacho=d.id
@@ -2042,7 +2048,7 @@ exports.orquestador_server_1 = async (req, resp) => {
 
                             if(proforma && proforma.rows && proforma.rows.length>0){
                                 let resultP=await client.query(`
-                                SELECT 
+                                SELECT
                                 t.fk_propuesta,t.fk_cliente,gc.fk_servicio,gc.referencia,ct.fk_consolidado,
                                 upper(c."dteEmail") as email
                                 FROM
@@ -2053,14 +2059,14 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 INNER JOIN public.gc_propuestas_cabeceras gc on gc.id=t.fk_propuesta
                                 INNER JOIN public.clientes c on c.id=t.fk_cliente
                                 WHERE cpd.fk_contenedor_proforma=`+proforma.rows[0].fk_proforma+` and t.fk_cliente=`+proforma.rows[0].fk_cliente+` group by t.fk_propuesta,t.fk_cliente,gc.fk_servicio,c."dteEmail",gc.referencia,ct.fk_consolidado`);
-                        
+
                             if(resultP && resultP.rows && resultP.rows.length>0){
                                 for(let i=0;i<resultP.rows.length;i++){
                                     if(resultP.rows[i].fk_servicio!=null && resultP.rows[i].fk_servicio>0){
                                         let NotifConfig1=await Notifications.verifyConfigNotificationExpDigital(resultP.rows[i].fk_cliente, nro_notificacion/*NUMERO DE NOTIFICACION*/,
                                             async function(res2){
                                                 if(res2!=null && res2.data){
-                                                    if(res2.data.estado_web===true){    
+                                                    if(res2.data.estado_web===true){
                                                         let insertNotification1=await Notifications.insertNotificationExpDigital({
                                                             fk_cliente:resultP.rows[i].fk_cliente,
                                                             texto:message,
@@ -2133,9 +2139,9 @@ exports.orquestador_server_1 = async (req, resp) => {
 
                                                                 texto.push(texto1);texto.push('En el archivo adjunto puedes encontrar la factura correspondiente.');
                                                             }
-                                                            
 
-                                                            
+
+
                                                         /* var estadoCorreo = await enviarEmail.mail_notificacion_1({
                                                                 asunto:asunto,
                                                                 nombreUsuario:res2.data.razon_social.toUpperCase(),
@@ -2188,7 +2194,7 @@ exports.orquestador_server_1 = async (req, resp) => {
 
                             SELECT pro.din, c.id as fk_cliente,
                             d.contenedor,
-                            c."dteEmail", com.email, 
+                            c."dteEmail", com.email,
                             concat(com.nombre, ' ', com.apellidos) as nombre,
                             c."razonSocial",
                             com.telefono,
@@ -2215,10 +2221,10 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 ON c.id = d.fk_cliente
                             LEFT JOIN public.usuario com
                                 ON c.fk_comercial=com.id
-                
+
                             WHERE pro.estado <> false AND pro.id = '${fk_nota_cobro}'
                             LIMIT 1
-                        
+
                         `);
 
                         var correo_cli = Lista.rows[0]['dteEmail'];
@@ -2229,7 +2235,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                         } else if ( correo_com == '' ||  correo_com == undefined ||  correo_com == null) {
                             console.log("CLIENTE NO TIENE CORREO DE COMERCIAL");
                         } else {
-                        
+
                             let asunto = `WS Cargo | Documentación de tu servicio N°${Lista.rows[0].fk_servicio}`;
                             if (Lista.rows[0].n_referencia != null) {
                                 asunto += `/${Lista.rows[0].n_referencia}`
@@ -2241,14 +2247,14 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 n_referencia: Lista.rows[0].n_referencia,
                                 contenedor: Lista.rows[0].contenedor,
                             }
-            
+
                             /*
                             let info_comercial = {
                                 nombre: Lista.rows[0].nombre,
                                 telefono: Lista.rows[0].telefono
                             }
                             */
-                            
+
                             let info_comercial=null;
                             let comer = await funcionesCompartidasCtrl.get_comercial_vigente(Lista.rows[0].fk_cliente);
                             if(comer && comer.rows && comer.rows.length>0){
@@ -2314,13 +2320,13 @@ exports.orquestador_server_1 = async (req, resp) => {
                     }
                 }
             }
-            
+
         } else {
-            
+
         }
     }
 
-    async function enviar_documento_maximise_comer(tarea) { 
+    async function enviar_documento_maximise_comer(tarea) {
         console.log('Envio de documento comercializadora')
         client.query(` UPDATE public.queue_maximise SET estado='PROCESANDO' WHERE id=${tarea.id} `);
 
@@ -2339,13 +2345,13 @@ exports.orquestador_server_1 = async (req, resp) => {
 
             let fk_nota_cobro = facturas.rows[0]['fk_nota_cobro'];
 
-            var detalles = await client.query(` 
-            SELECT 
-            * 
-            FROM public.wsc_envio_facturas_detalles2 
-            where 
-            fk_cabecera=`+facturas.rows[0]['numero_unico']+` 
-            and anomesdiahora=`+facturas.rows[0]['anomesdiahora']+` 
+            var detalles = await client.query(`
+            SELECT
+            *
+            FROM public.wsc_envio_facturas_detalles2
+            where
+            fk_cabecera=`+facturas.rows[0]['numero_unico']+`
+            and anomesdiahora=`+facturas.rows[0]['anomesdiahora']+`
             and line_text = '${facturas.rows[0]['ref_text2']}'
             `);
 
@@ -2353,7 +2359,7 @@ exports.orquestador_server_1 = async (req, resp) => {
             {
                 if (facturas.rows[0]['total_amt'] > 0) {
                     var inv_date_aux = facturas.rows[0]['inv_date'].split('-');
-                    var contador = await client.query(` 
+                    var contador = await client.query(`
                         SELECT count(*)+1 as cont
                         FROM wsc_envio_facturas_cabeceras2
                         WHERE doc_code='${facturas.rows[0]['doc_code']}' AND fk_nota_cobro=${fk_nota_cobro}
@@ -2369,15 +2375,15 @@ exports.orquestador_server_1 = async (req, resp) => {
                     const fs = require("fs");
 
                     const xmltext = `
-                                        SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num, 
+                                        SELECT ih.INV_NUM, ih.doc_code, ih.cust_code, ih.PAID_AMT, ih.TOTAL_AMT,ih.REF_TEXT1,ih.REF_TEXT2, ih.ext_num,
                                         (SELECT top 1 TOTAL_AMT FROM credithead ch WHERE ch.inv_num = ih.inv_num AND POSTED_FLAG<>'V' AND CMPY_CODE='03') as total_credito
                                         FROM invoicehead ih
-                                        WHERE ih.cmpy_code='03' and 
+                                        WHERE ih.cmpy_code='03' and
                                             ih.POSTED_FLAG<>'V' and
                                             ih.ref_text1='${facturas.rows[0]['ref_text1']}' and
                                             ih.ref_text2='${facturas.rows[0]['ref_text2']}' and
                                             (ih.doc_code='${facturas.rows[0]['doc_code']}' or ih.doc_code='D1')
-                                        ORDER BY ih.inv_num DESC;  
+                                        ORDER BY ih.inv_num DESC;
                                     `;
 
                     const data_get = {
@@ -2406,12 +2412,12 @@ exports.orquestador_server_1 = async (req, resp) => {
 
                     request.post(options_get, (err, res, body) => {
 
-                        if(err) 
-                        { 
+                        if(err)
+                        {
                             console.log('ERROR GETQUERY AS DATASET');
                         }
-                        else if(body) 
-                        {   
+                        else if(body)
+                        {
                             console.log(" RESPONSE GET INVOICEHEAD ");
                             if(JSON.stringify(res.body).includes("System.Web.Services.Protocols.SoapException:")){
 
@@ -2464,11 +2470,11 @@ exports.orquestador_server_1 = async (req, resp) => {
                         }
                     });
 
-                    
+
 
                     async function enviar_documento_maximise(facturas, inv_date_aux, today_ano, today_mes, today_dia, monto, contador, i, detalles, flag_refactura)
                     {
-                        
+
                         var xmltext_aux = `<string xmlns="Maximise"><CUSTOMERINVOICE><HEAD>`;
                         xmltext_aux += `<CMPY_CODE>`+facturas.rows[0]['cmpy_code']+`</CMPY_CODE>`;
                         xmltext_aux += `<TAX_CODE>IDF</TAX_CODE>`;
@@ -2488,7 +2494,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             console.log('REFACTURA, monto: ' + monto)
                             var montoSinIva = Number(monto*100/119).toFixed(0);
                             var iva = monto - montoSinIva;
-                            
+
                             xmltext_aux += `<GOODS_AMT>`+montoSinIva+`</GOODS_AMT>`;
                             xmltext_aux += `<EXCENT_AMT>`+facturas.rows[0]['excent_amt']+`</EXCENT_AMT>`;
                             xmltext_aux += `<TOTAL_AMT>`+monto+`</TOTAL_AMT>`;
@@ -2496,10 +2502,10 @@ exports.orquestador_server_1 = async (req, resp) => {
                             xmltext_aux += `<COST_AMT>0</COST_AMT>`;
                             xmltext_aux += `<PAID_AMT>0</PAID_AMT>`;
                             xmltext_aux += `<TAX_AMT>`+iva+`</TAX_AMT>`;
-        
+
                             var comuna = String(facturas.rows[0]['idcomuna']).length==5?String(facturas.rows[0]['idcomuna']):'0'+String(facturas.rows[0]['idcomuna']);
                             var ciudad = String(facturas.rows[0]['idciudad']);
-                            
+
                             xmltext_aux += `<DUE_DATE>`+facturas.rows[0]['due_date']+`</DUE_DATE>`;
                             xmltext_aux += `<POSTED_FLAG>N</POSTED_FLAG>`;
                             xmltext_aux += `<PRINTED_FLAG>N</PRINTED_FLAG>`;
@@ -2538,7 +2544,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             xmltext_aux += `<RET_AMT>0</RET_AMT>`;
                             xmltext_aux += `<RET_PER>0</RET_PER>`;
                             xmltext_aux += `</HEAD>`;
-                
+
                             var NombreArchivo = facturas.rows[0]['ref_text1'];
 
                             xmltext_aux += `<DETAIL>`;
@@ -2578,7 +2584,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             xmltext_aux += `</DETAIL>`;
 
                         } else {
-                            
+
                             xmltext_aux += `<GOODS_AMT>`+facturas.rows[0]['goods_amt']+`</GOODS_AMT>`;
                             xmltext_aux += `<EXCENT_AMT>`+facturas.rows[0]['excent_amt']+`</EXCENT_AMT>`;
                             xmltext_aux += `<TOTAL_AMT>`+facturas.rows[0]['total_amt']+`</TOTAL_AMT>`;
@@ -2586,10 +2592,10 @@ exports.orquestador_server_1 = async (req, resp) => {
                             xmltext_aux += `<COST_AMT>0</COST_AMT>`;
                             xmltext_aux += `<PAID_AMT>0</PAID_AMT>`;
                             xmltext_aux += `<TAX_AMT>`+facturas.rows[0]['tax_amt']+`</TAX_AMT>`;
-        
+
                             var comuna = String(facturas.rows[0]['idcomuna']).length==5?String(facturas.rows[0]['idcomuna']):'0'+String(facturas.rows[0]['idcomuna']);
                             var ciudad = String(facturas.rows[0]['idciudad']);
-                            
+
                             xmltext_aux += `<DUE_DATE>`+facturas.rows[0]['due_date']+`</DUE_DATE>`;
                             xmltext_aux += `<POSTED_FLAG>N</POSTED_FLAG>`;
                             xmltext_aux += `<PRINTED_FLAG>N</PRINTED_FLAG>`;
@@ -2628,7 +2634,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             xmltext_aux += `<RET_AMT>0</RET_AMT>`;
                             xmltext_aux += `<RET_PER>0</RET_PER>`;
                             xmltext_aux += `</HEAD>`;
-                
+
                             var NombreArchivo = facturas.rows[0]['ref_text1'];
                             for(var i=0; i<detalles.rows.length; i++)
                             {
@@ -2670,7 +2676,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             }
                         }
 
-                        
+
                         xmltext_aux +=`</CUSTOMERINVOICE></string>`;
                         console.log(xmltext_aux);
 
@@ -2699,17 +2705,17 @@ exports.orquestador_server_1 = async (req, resp) => {
                         request.post(options, (err, res, body) => {
 
                             var texto_log = '';
-                            if(err) 
-                            { 
+                            if(err)
+                            {
                                 update_error_cargar_maximise(err, facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
                             }
-                            else if(body) 
-                            {   
-                                console.log(" --------------------------- RES "+facturas.rows[0]['ref_text1'] + ' -----------------------------'); 
+                            else if(body)
+                            {
+                                console.log(" --------------------------- RES "+facturas.rows[0]['ref_text1'] + ' -----------------------------');
                                 console.log("  ");
                                 if(JSON.stringify(res.body).includes("System.Web.Services.Protocols.SoapException:")){
-                                    
-                                    console.log(" --------------------------- ERROR "); 
+
+                                    console.log(" --------------------------- ERROR ");
                                     console.log(JSON.stringify(res.body));
                                     update_error_cargar_maximise(JSON.stringify(res.body), facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
 
@@ -2719,8 +2725,8 @@ exports.orquestador_server_1 = async (req, resp) => {
                                     var numero_interno = JSON.stringify(body);
                                     numero_interno = numero_interno.replace('</int>', '');
                                     var id_maximise = numero_interno.substring(71, (Number(numero_interno.length)-1) );
-                                    console.log(" --------------------------- BODY REPORT "); 
-                                    console.log(" --------------------------- "+id_maximise); 
+                                    console.log(" --------------------------- BODY REPORT ");
+                                    console.log(" --------------------------- "+id_maximise);
                                     console.log("  ");
 
                                     let numero, msg;
@@ -2748,7 +2754,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             }
                         });
 
-                    
+
                     }
 
                     async function enviar_documento_sii(id_maximise, cabecera, anomesdiahora, NombreArchivo, cmpy_code, fk_nota_cobro, doc_code)
@@ -2762,7 +2768,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             DocumentNumber: id_maximise,
                             Company: cmpy_code
                         };
-                    
+
                         const options = {
                             url: 'http://asp3.maximise.cl/wsv/Invoice.asmx/PrintDocument',
                             method: 'POST',
@@ -2779,21 +2785,21 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 Company: cmpy_code
                             }
                         };
-                    
+
                         request.post(options, (err, res, body) => {
-                    
+
                             var texto_log = '';
-                            if(err) 
-                            { 
+                            if(err)
+                            {
                                 update_error_cargar_sii('ERROR CARGAR SII', cabecera, anomesdiahora, fk_nota_cobro, doc_code);
                             }
-                            else if(body) 
-                            {   
-                                console.log(" --------------------------- SII --------------------------"); 
+                            else if(body)
+                            {
+                                console.log(" --------------------------- SII --------------------------");
                                 console.log("  ");
                                 if(res.statusCode==200 )
                                 {
-                                    console.log(" --------------------------- BODY REPORT "+JSON.stringify(body)); 
+                                    console.log(" --------------------------- BODY REPORT "+JSON.stringify(body));
                                     console.log("  ");
 
                                     var folio_sii = JSON.stringify(body);
@@ -2809,8 +2815,8 @@ exports.orquestador_server_1 = async (req, resp) => {
                                         DocumentNumber: id_maximise,
                                         Company: cmpy_code
                                     };
-                            
-                                    
+
+
                                     const options = {
                                         url: 'http://asp3.maximise.cl/wsv/Invoice.asmx/DownloadPdf',
                                         method: 'POST',
@@ -2827,15 +2833,15 @@ exports.orquestador_server_1 = async (req, resp) => {
                                             Company: cmpy_code
                                         }
                                     };
-                            
+
                                     const response_req = request.post(options, (err, res, body) => {
-                                        
+
                                     });
-                                    
+
                                     response_req.on('response', function (res) {
-                
+
                                         res.pipe(fs.createWriteStream('C:/Users/Administrator/Documents/wscargo/restserver/public/files/fact_cargar_por_contenedor/'+NombreArchivo+'.pdf'));
-                
+
                                     });
 
                                     enviar_notificacion(13, 'Factura diponible del servicio disponible para entrega',fk_nota_cobro);
@@ -2849,53 +2855,53 @@ exports.orquestador_server_1 = async (req, resp) => {
                                     return "ERROR2";
                                 }
                             }
-                    
+
                         });
                     }
-                    
+
                     async function update_cargado_maximise(id_maximise, numero_unico, anomesdiahora, fk_nota_cobro, doc_code)
                     {
                         console.log (`CARGADA MAXIMISE `);
 
-                        await client.query(` 
-                        UPDATE public.wsc_envio_facturas_cabeceras2 
-                        SET estado='CARGADA MAXIMISE' 
+                        await client.query(`
+                        UPDATE public.wsc_envio_facturas_cabeceras2
+                        SET estado='CARGADA MAXIMISE'
                         , max_id_interno=`+id_maximise+`
-                        where 
-                        numero_unico=`+numero_unico+` 
-                        and 
-                        anomesdiahora=`+anomesdiahora+` 
+                        where
+                        numero_unico=`+numero_unico+`
+                        and
+                        anomesdiahora=`+anomesdiahora+`
                         `);
 
                         var codigo = doc_code=='DI'?1:doc_code=='P8'||doc_code=='PF'?2:3;
-                        await client.query(` 
-                        UPDATE public.notas_cobros_estados 
-                        SET estado='CARGADA MAXIMISE' 
+                        await client.query(`
+                        UPDATE public.notas_cobros_estados
+                        SET estado='CARGADA MAXIMISE'
                         WHERE fk_provision=`+fk_nota_cobro+` AND fk_tipo=${codigo}`);
 
                         client.query(` UPDATE public.queue_maximise SET estado='CARGADA MAXIMISE' WHERE id=${tarea.id} `);
-                        
+
                     }
 
                     async function update_error_cargar_sii(err, numero_unico, anomesdiahora, fk_nota_cobro, doc_code)
                     {
                         console.log(` ERROR CARGAR SII`);
 
-                        await client.query(` 
-                        UPDATE public.wsc_envio_facturas_cabeceras2 
-                        SET 
-                        estado='ERROR CARGAR SII' 
+                        await client.query(`
+                        UPDATE public.wsc_envio_facturas_cabeceras2
+                        SET
+                        estado='ERROR CARGAR SII'
                         , log = concat(log,'\n','`+err+`')
-                        where 
-                        numero_unico=`+numero_unico+` 
-                        and 
-                        anomesdiahora=`+anomesdiahora+` 
+                        where
+                        numero_unico=`+numero_unico+`
+                        and
+                        anomesdiahora=`+anomesdiahora+`
                         `);
 
                         var codigo = doc_code=='DI'?1:doc_code=='P8'||doc_code=='PF'?2:3;
-                        await client.query(` 
-                        UPDATE public.notas_cobros_estados 
-                        SET estado='ERROR CARGAR SII' 
+                        await client.query(`
+                        UPDATE public.notas_cobros_estados
+                        SET estado='ERROR CARGAR SII'
                         WHERE fk_provision=`+fk_nota_cobro+`  AND fk_tipo=${codigo}`);
 
                         client.query(` UPDATE public.queue_maximise SET estado='ERROR CARGAR SII', info_extra='ERROR: ${err}' WHERE id=${tarea.id} `);
@@ -2906,32 +2912,32 @@ exports.orquestador_server_1 = async (req, resp) => {
                     {
                         console.log(`ERROR CARGAR MAXIMISE`);
 
-                        console.log(` 
-                        UPDATE public.wsc_envio_facturas_cabeceras2 
-                        SET 
-                        estado='ERROR CARGAR MAXIMISE' 
+                        console.log(`
+                        UPDATE public.wsc_envio_facturas_cabeceras2
+                        SET
+                        estado='ERROR CARGAR MAXIMISE'
                         , log = concat(log,'\n','`+err+`')
-                        where 
-                        numero_unico=`+numero_unico+` 
-                        and 
-                        anomesdiahora=`+anomesdiahora+` 
+                        where
+                        numero_unico=`+numero_unico+`
+                        and
+                        anomesdiahora=`+anomesdiahora+`
                         `);
 
-                        await client.query(` 
-                        UPDATE public.wsc_envio_facturas_cabeceras2 
-                        SET 
-                        estado='ERROR CARGAR MAXIMISE' 
+                        await client.query(`
+                        UPDATE public.wsc_envio_facturas_cabeceras2
+                        SET
+                        estado='ERROR CARGAR MAXIMISE'
                         , log = concat(log,'\n','`+err+`')
-                        where 
-                        numero_unico=`+numero_unico+` 
-                        and 
-                        anomesdiahora=`+anomesdiahora+` 
+                        where
+                        numero_unico=`+numero_unico+`
+                        and
+                        anomesdiahora=`+anomesdiahora+`
                         `);
 
                         var codigo = doc_code=='DI'?1:doc_code=='P8'||doc_code=='PF'?2:3;
-                        await client.query(` 
-                        UPDATE public.notas_cobros_estados 
-                        SET estado='ERROR CARGAR MAXIMISE' 
+                        await client.query(`
+                        UPDATE public.notas_cobros_estados
+                        SET estado='ERROR CARGAR MAXIMISE'
                         WHERE fk_provision=`+fk_nota_cobro+` AND fk_tipo=${codigo}`);
 
                         client.query(` UPDATE public.queue_maximise SET estado='ERROR CARGAR MAXIMISE', info_extra='ERROR: ${err} WHERE id=${tarea.id} `);
@@ -2954,21 +2960,21 @@ exports.orquestador_server_1 = async (req, resp) => {
                     {
                         console.log(`ENVIADA SII`);
                         await client.query(` UPDATE public.wsc_envio_facturas_cabeceras2 SET estado='ENVIADA SII', sii_factura='`+folio_sii+`' where numero_unico=`+cabecera+` and anomesdiahora=`+anomesdiahora+` `);
-                        
+
                         var codigo = doc_code=='DI'?1:doc_code=='P8'||doc_code=='PF'?2:3;
                         await client.query(` UPDATE public.notas_cobros_estados SET estado='ENVIADA SII' WHERE fk_provision=`+fk_nota_cobro+` AND fk_tipo=${codigo}`);
 
                         client.query(` UPDATE public.queue_maximise SET estado='ENVIADA SII' WHERE id=${tarea.id} `);
 
-                    
+
                     }
 
                     async function enviar_notificacion(nro_notificacion, message,fk_nota_cobro)
                     {
-                        
+
                         if(process.env.notificacionesClienteDigital){
                             let proforma=await client.query(`
-                            SELECT 
+                            SELECT
                                 d.id,d.contenedor,d.fk_cliente,c.id as fk_contenedor,cp.id as fk_proforma,d.n_carpeta from
                                 public.despachos d
                                 INNER JOIN public.notas_cobros nc on nc.fk_despacho=d.id
@@ -2978,7 +2984,7 @@ exports.orquestador_server_1 = async (req, resp) => {
 
                             if(proforma && proforma.rows && proforma.rows.length>0){
                             let resultP=await client.query(`
-                            SELECT 
+                            SELECT
                             t.fk_propuesta,t.fk_cliente,gc.fk_servicio,gc.referencia,ct.fk_consolidado,
                             upper(c."dteEmail") as email
                             FROM
@@ -2989,14 +2995,14 @@ exports.orquestador_server_1 = async (req, resp) => {
                             INNER JOIN public.gc_propuestas_cabeceras gc on gc.id=t.fk_propuesta
                             INNER JOIN public.clientes c on c.id=t.fk_cliente
                             WHERE cpd.fk_contenedor_proforma=`+proforma.rows[0].fk_proforma+` and t.fk_cliente=`+proforma.rows[0].fk_cliente+` group by t.fk_propuesta,t.fk_cliente,gc.fk_servicio,c."dteEmail",gc.referencia,ct.fk_consolidado`);
-                        
+
                             if(resultP && resultP.rows && resultP.rows.length>0){
                                 for(let i=0;i<resultP.rows.length;i++){
                                     if(resultP.rows[i].fk_servicio!=null && resultP.rows[i].fk_servicio>0){
                                         let NotifConfig1=await Notifications.verifyConfigNotificationExpDigital(resultP.rows[i].fk_cliente, nro_notificacion/*NUMERO DE NOTIFICACION*/,
                                             async function(res2){
                                                 if(res2!=null && res2.data){
-                                                    if(res2.data.estado_web===true){    
+                                                    if(res2.data.estado_web===true){
                                                         let insertNotification1=await Notifications.insertNotificationExpDigital({
                                                             fk_cliente:resultP.rows[i].fk_cliente,
                                                             texto:message,
@@ -3069,9 +3075,9 @@ exports.orquestador_server_1 = async (req, resp) => {
 
                                                                 texto.push(texto1);texto.push('En el archivo adjunto puedes encontrar la factura correspondiente.');
                                                             }
-                                                            
 
-                                                            
+
+
                                                             /*var estadoCorreo = await enviarEmail.mail_notificacion_1({
                                                                 asunto:asunto,
                                                                 nombreUsuario:res2.data.razon_social.toUpperCase(),
@@ -3118,14 +3124,14 @@ exports.orquestador_server_1 = async (req, resp) => {
                     }
                 }
             }
-            
+
         } else {
-            
+
         }
-            
+
     }
 
-    
+
 }
 
 
@@ -3143,14 +3149,14 @@ exports.generarPdfFacturas = async (req, resp) => {
     {
 
         var facturas = await client.query(` SELECT * FROM public.wsc_envio_facturas_cabeceras2 where cmpy_code='03' AND max_id_interno<>0 and archivofactura='0' limit 1 `);
-        
+
         if(facturas.rows.length>0)
         {
             console.log(" CONSULTANDO FACTURA " + facturas.rows[0]['ref_text2'] + ' de ' + facturas.rows[0]['ref_text1']);
             update_nombre_archivo(facturas.rows[0]['id'], 'PROCESANDO');
 
             const request = require('request');
-            const fs = require("fs"); 
+            const fs = require("fs");
 
             const data = {
                 AliasName: 'dwi_tnm',
@@ -3159,7 +3165,7 @@ exports.generarPdfFacturas = async (req, resp) => {
                 DocumentNumber: facturas.rows[0]['max_id_interno'],
                 Company: facturas.rows[0]['cmpy_code']
             };
-            
+
             const options = {
                 url: 'http://asp3.maximise.cl/wsv/Invoice.asmx/DownloadPdf',
                 method: 'POST',
@@ -3176,11 +3182,11 @@ exports.generarPdfFacturas = async (req, resp) => {
                     Company:  facturas.rows[0]['cmpy_code']
                 }
             };
-    
+
             const response_req = request.post(options, (err, res, body) => {
-                
+
             });
-            
+
             response_req.on('response', function (res) {
 
                 res.pipe(fs.createWriteStream('C:/Users/Administrator/Documents/wscargo/restserver/public/files/facturas_cws/'+facturas.rows[0]['ref_text2']+'_'+facturas.rows[0]['ref_text1']+'.pdf'));
@@ -3189,12 +3195,12 @@ exports.generarPdfFacturas = async (req, resp) => {
 
             });
             return "OK";
-            
+
         } else {
             console.log("NO QUEDAN MAS FACTURAS POR DESCARGAR");
 
         }
-        
+
         async function update_nombre_archivo(id, archivo)
         {
             console.log(` UPDATE public.wsc_envio_facturas_cabeceras2 SET archivofactura='`+archivo+`' where id=`+id+` `);
@@ -3225,7 +3231,7 @@ exports.generarTgr = async (req, resp) => {
         const save_dir = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/tgr/';
 
         var pendiente = await client.query(` SELECT * FROM public.queue_tgr WHERE estado='PENDIENTE' ORDER BY id ASC limit 1 `);
-        
+
         if(pendiente.rows.length>0)
         {
 
@@ -3265,10 +3271,10 @@ exports.generarTgr = async (req, resp) => {
 
             request.post(options, (err, res, body) => {
 
-                if(err) 
-                { 
+                if(err)
+                {
                     console.log(" --------------------------- ERROR REPORT ");
-                    console.log(" --------------------------- ERROR REPORT "+JSON.stringify(err)); 
+                    console.log(" --------------------------- ERROR REPORT "+JSON.stringify(err));
                     console.log(" --------------------------- ERROR REPORT ");
                     console.log("  ");
                     console.log("  ");
@@ -3276,8 +3282,8 @@ exports.generarTgr = async (req, resp) => {
                     update_estado(id, 'ERROR GET');
 
                 }
-                else if(body) 
-                {   
+                else if(body)
+                {
 
                     let aux_body = body.replace('/web/Contenido/ImagenesSitio/logos/logo_teso1.png', '{{logo_teso1}}');
                     aux_body = aux_body.replace('/web/Contenido/ImagenesSitio/TimbreInternetPagado.jpg', '{{TimbreInternetPagado}}');
@@ -3357,12 +3363,12 @@ exports.generarTgr = async (req, resp) => {
                 }
 
             });
-            
+
         } else {
             console.log("NO QUEDAN TGR POR GENERAR");
 
         }
-        
+
         async function update_estado(id, estado)
         {
             console.log(` UPDATE public.queue_tgr SET estado='`+estado+`' where id=`+id+` `);
