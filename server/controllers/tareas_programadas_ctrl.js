@@ -1752,6 +1752,8 @@ exports.orquestador_server_1 = async (req, resp) => {
 
                         update_estado_factura('CARGADA MAXIMISE', facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
 
+                        const fsPromises = require('fs').promises
+                        await fsPromises.writeFile('C:/Users/Administrator/Documents/wscargo/restserver/public/files/fact_cargar_por_contenedor/'+facturas.rows[0]['doc_code']+'_'+NombreArchivo+'.txt', xmltext_aux)
 
                         const data = {
                             AliasName: 'dwi_tnm',
@@ -1821,7 +1823,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                                     update_cargado_maximise(id_maximise, facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
                                     if( facturas.rows[0]['servicio']=='SI' ){
                                         /* lalo */
-                                        //enviar_documento_sii(id_maximise, facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], NombreArchivo, facturas.rows[0]['cmpy_code'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
+                                        enviar_documento_sii(id_maximise, facturas.rows[0]['numero_unico'], facturas.rows[0]['anomesdiahora'], NombreArchivo, facturas.rows[0]['cmpy_code'], facturas.rows[0]['fk_nota_cobro'], facturas.rows[0]['doc_code']);
                                     }
                                 }
                             }
@@ -1912,8 +1914,13 @@ exports.orquestador_server_1 = async (req, resp) => {
                                     });
 
                                     response_req.on('response', function (res) {
-
+                                        /* lalo */
+                                        /*
+                                        res.pipe(fs.createWriteStream('C:/Users/Administrator/Documents/wscargo/restserver/public/files/fact_cargar_por_contenedor/'+doc_code.toUpperCase()+'_'+NombreArchivo+'.pdf'));
+                                        */
+                                        
                                         res.pipe(fs.createWriteStream('C:/Users/Administrator/Documents/wscargo/restserver/public/files/fact_cargar_por_contenedor/'+NombreArchivo+'.pdf'));
+                                        
 
                                     });
 
@@ -2159,6 +2166,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                                                                 email:resultP.rows[i].email,
                                                                 comercial:comercial
                                                             });*/
+
                                                             let envio=await emailHandler.insertEmailQueue({
                                                                 para:resultP.rows[i].email,
                                                                 asunto:asunto,
@@ -2176,6 +2184,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                                                                 copia:null,
                                                                 copia_oculta:null
                                                             });
+
                                                         /* var estadoCorreo = await enviarEmail.mail_notificacion_exp_digital({
                                                                 asunto:req.body.asunto,
                                                                 texto:'Consolidación de carga - Servicio N° '+resultP.rows[i].fk_servicio,
@@ -2306,7 +2315,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 files['tgr_file_path'] = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/tgr/TGR'+Lista.rows[0].din+'.jpg';
                             }
 
-
+                            /* LALO BLOQUEAR ENVIO 
                             let envio=await emailHandler.insertEmailQueue({
                                 para:correo_cli,
                                 asunto:asunto,
@@ -2324,6 +2333,8 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 copia:correo_com + ', gestion@wscargo.cl, pagos@wscargo.cl, tomas.godoy@wscargo.cl, marcela.illanes@wscargo.cl',
                                 copia_oculta:null
                             });
+                            */
+
                         }
                     }
                 }
@@ -2349,6 +2360,8 @@ exports.orquestador_server_1 = async (req, resp) => {
 
         var facturas = await client.query(` SELECT * FROM public.wsc_envio_facturas_cabeceras2 where id=${tarea['fk_cabecera']}`);
 
+        console.log('\n\n FACTURAS ENCONTRADAS '+JSON.stringify(facturas));
+
         if(facturas.rows.length>0) {
 
             let fk_nota_cobro = facturas.rows[0]['fk_nota_cobro'];
@@ -2363,8 +2376,11 @@ exports.orquestador_server_1 = async (req, resp) => {
             and line_text = '${facturas.rows[0]['ref_text2']}'
             `);
 
+            console.log('\n\n DETALLE ENCONTRADAS '+JSON.stringify(detalles));
+
             if(detalles.rows.length>0)
             {
+                console.log('\n\n total_amt '+facturas.rows[0]['total_amt']);
                 if (facturas.rows[0]['total_amt'] > 0) {
                     var inv_date_aux = facturas.rows[0]['inv_date'].split('-');
                     var contador = await client.query(`
@@ -3113,6 +3129,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                                                                 copia:null,
                                                                 copia_oculta:null
                                                             });
+
                                                         /* var estadoCorreo = await enviarEmail.mail_notificacion_exp_digital({
                                                                 asunto:req.body.asunto,
                                                                 texto:'Consolidación de carga - Servicio N° '+resultP.rows[i].fk_servicio,
