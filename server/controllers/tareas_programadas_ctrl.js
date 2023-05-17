@@ -1302,7 +1302,15 @@ exports.orquestador_server_1 = async (req, resp) => {
     });
 
     async function orquestador_server_1() {
-        var tarea = await client.query(` SELECT * FROM public.queue_maximise WHERE estado='PENDIENTE' ORDER BY id ASC limit 1`);
+        var tarea = await client.query(` 
+        SELECT 
+        * 
+        FROM public.queue_maximise 
+        WHERE 
+        ( estado='PENDIENTE' and tarea='DOCUMENTOS COMER' )
+        or (estado='PENDIENTE' and tarea='DOCUMENTOS' )
+        ORDER BY id ASC limit 1
+        `);
         console.log("$$$$$$");
         if(tarea.rows.length > 0) {
             console.log('TAREA ENCONTRADA: ENVIO DE ' + tarea.rows[0]['tarea']);
