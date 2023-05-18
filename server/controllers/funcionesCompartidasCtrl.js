@@ -15,6 +15,16 @@ const e = require('express');
 * @param Cliente
 * @return informacion ejecutivo
 */
+
+exports.get_fecha_hora_actual = async () => {
+    
+    var fecha =  new Date();
+    var moment = require('moment'); 
+    moment.locale('es');
+    return ''+moment(fecha).format('YYYY-MM-DD HH:mm');
+
+}
+
 exports.get_comercial_vigente_data = async (Cliente) => {
     
     return await client.query(`

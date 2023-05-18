@@ -1918,10 +1918,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                                         /*
                                         res.pipe(fs.createWriteStream('C:/Users/Administrator/Documents/wscargo/restserver/public/files/fact_cargar_por_contenedor/'+doc_code.toUpperCase()+'_'+NombreArchivo+'.pdf'));
                                         */
-                                        
                                         res.pipe(fs.createWriteStream('C:/Users/Administrator/Documents/wscargo/restserver/public/files/fact_cargar_por_contenedor/'+NombreArchivo+'.pdf'));
-                                        
-
                                     });
 
                                     //enviar_notificacion(13, 'Factura diponible del servicio disponible para entrega',fk_nota_cobro);
@@ -2102,16 +2099,6 @@ exports.orquestador_server_1 = async (req, resp) => {
                                                                 comercial=comer.rows[0];
                                                             }
 
-                                                            /*
-                                                            let comercial=null;
-                                                            if(res2.data.fk_comercial && res2.data.fk_comercial!=null){
-                                                                let comer=await client.query(`SELECT concat(nombre,' ',apellidos) as nombre,email,telefono FROM public.usuario where id=`+res2.data.fk_comercial);
-                                                                if(comer && comer.rows && comer.rows.length>0){
-                                                                    comercial=comer.rows[0];
-                                                                }
-                                                            }
-                                                            */
-
                                                             let asunto='';
                                                             let texto1='';
                                                             let texto=['Hola '+res2.data.razon_social.toUpperCase()+'.'];let tipoAtt=null;
@@ -2182,7 +2169,12 @@ exports.orquestador_server_1 = async (req, resp) => {
                                                                 datos:null,
                                                                 tipo_id:nro_notificacion,
                                                                 copia:null,
-                                                                copia_oculta:null
+                                                                copia_oculta:null,
+
+                                                                para_respaldo:resultP.rows[i].email,
+                                                                copia_respaldo:null,
+                                                                copia_oculta_respaldo:null,
+                                                                fecha_hora:funcionesCompartidasCtrl.get_fecha_hora_actual()
                                                             });
 
                                                         /* var estadoCorreo = await enviarEmail.mail_notificacion_exp_digital({
@@ -2315,9 +2307,8 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 files['tgr_file_path'] = 'C:/Users/Administrator/Documents/wscargo/restserver/public/files/tgr/TGR'+Lista.rows[0].din+'.jpg';
                             }
 
-                            /* LALO BLOQUEAR ENVIO 
                             let envio=await emailHandler.insertEmailQueue({
-                                para:correo_cli,
+                                para:'edo.v81@gmail.com' /*correo_cli*/,
                                 asunto:asunto,
                                 fecha:null,
                                 texto:null,
@@ -2330,10 +2321,14 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 datos_adicionales:JSON.stringify(info_extra),
                                 datos:null,
                                 tipo_id:null,
-                                copia:correo_com + ', gestion@wscargo.cl, pagos@wscargo.cl, tomas.godoy@wscargo.cl, marcela.illanes@wscargo.cl',
-                                copia_oculta:null
+                                copia:null /*correo_com + ', gestion@wscargo.cl, pagos@wscargo.cl, tomas.godoy@wscargo.cl, marcela.illanes@wscargo.cl' */,
+                                copia_oculta:null,
+                                
+                                para_respaldo:correo_cli,
+                                copia_respaldo:correo_com + ', gestion@wscargo.cl, pagos@wscargo.cl, tomas.godoy@wscargo.cl, marcela.illanes@wscargo.cl',
+                                copia_oculta_respaldo:null,
+                                fecha_hora:funcionesCompartidasCtrl.get_fecha_hora_actual()
                             });
-                            */
 
                         }
                     }
@@ -3127,7 +3122,12 @@ exports.orquestador_server_1 = async (req, resp) => {
                                                                 datos:null,
                                                                 tipo_id:nro_notificacion,
                                                                 copia:null,
-                                                                copia_oculta:null
+                                                                copia_oculta:null,
+
+                                                                para_respaldo:resultP.rows[i].email,
+                                                                copia_respaldo:null,
+                                                                copia_oculta_respaldo:null,
+                                                                fecha_hora:funcionesCompartidasCtrl.get_fecha_hora_actual()
                                                             });
 
                                                         /* var estadoCorreo = await enviarEmail.mail_notificacion_exp_digital({
