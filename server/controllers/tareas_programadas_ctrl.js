@@ -2308,7 +2308,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                             }
 
                             let envio=await emailHandler.insertEmailQueue({
-                                para:'edo.v81@gmail.com' /*correo_cli*/,
+                                para: correo_cli,
                                 asunto:asunto,
                                 fecha:null,
                                 texto:null,
@@ -2321,7 +2321,7 @@ exports.orquestador_server_1 = async (req, resp) => {
                                 datos_adicionales:JSON.stringify(info_extra),
                                 datos:null,
                                 tipo_id:null,
-                                copia:null /*correo_com + ', gestion@wscargo.cl, pagos@wscargo.cl, tomas.godoy@wscargo.cl, marcela.illanes@wscargo.cl' */,
+                                copia: correo_com + ', gestion@wscargo.cl, pagos@wscargo.cl, tomas.godoy@wscargo.cl, marcela.illanes@wscargo.cl',
                                 copia_oculta:null,
                                 
                                 para_respaldo:correo_cli,
